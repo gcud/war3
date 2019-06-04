@@ -1,0 +1,38 @@
+[gcudGetCoordinateDistance]
+title="获取两个坐标距离[gcud]"
+description = "X${X},Y${Y}与X${X},Y${Y}距离"
+comment = "自己写的函数,本来因为没有这个而想用lua重写地图的"
+category=TC_MATH
+returns =real
+[[.args]]
+type = real
+[[.args]]
+type = real
+[[.args]]
+type = real
+[[.args]]
+type = real
+
+[gcudR2I]
+title="将实数以四舍五入转化为整数[gcud]"
+description = "四舍五入转化${实数}为整数"
+comment = "只对第一位小数四舍五入"
+category=TC_MATH
+returns =integer
+[[.args]]
+type = real
+
+[gcudGetCoordinateAngle]
+title="获取两个坐标间角度[gcud]"
+description = "从X${X},Y${Y}到X${X},Y${Y}角度"
+comment = "自己写的函数,效率和精确度较好"
+category=TC_MATH
+returns =degree
+[[.args]]
+type = real
+[[.args]]
+type = real
+[[.args]]
+type = real
+[[.args]]
+type = real
