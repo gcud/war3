@@ -1,3 +1,8 @@
-此ui为ydwe专用,如果你打不开我的地图,可以尝试下载和使用我的ui,我使用的是1.31.8
+此ui为ydwe专用,如果你打不开我的地图,可以尝试下载和使用我的ui
+1.31.8
 如果你没有使用过其它ui,你可以直接将share和jass文件夹覆盖到ydwe根目录
-如果你使用了其它ui,打开ydwe的share\mpq目录的config文件,另起一行写上gcud,删除下载的ui文件夹的share\mpq目录的config文件,然后把share和jass文件夹覆盖到ydwe根目录
+如果你使用了其它ui,打开ydwe的share\mpq目录的config文件,另起一行写上gcud,删除下载的文件夹的share\mpq目录的config文件,然后把share和jass文件夹覆盖到ydwe根目录
+
+1.31.13
+如果你没有使用过其它ui,你可以直接将config文件和gcud文件夹覆盖到ydwe的ui目录
+如果你使用了其它ui,打开ydwe的ui目录的config文件,另起一行写上gcud,删除下载的文件夹的config文件,然后把gcud文件夹复制到ydwe的ui目录
