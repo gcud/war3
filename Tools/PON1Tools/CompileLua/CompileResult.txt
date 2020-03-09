@@ -1,0 +1,2623 @@
+function RegisterAi(p)
+local Race = GetPlayerRace(p)
+Ai_Race(p, Race)
+Ai_Research(p, Race)
+Ai_BuyWork(p)
+Ai_GoblinMinerMining(p)
+Ai_Build(p, Race)
+Ai_BuyHero(p)
+end
+function Ai_Race(p, Race)
+if (Race == RACE_ORC) then
+StartMeleeAI(p, "orc.ai")
+elseif (Race == RACE_UNDEAD) then
+StartMeleeAI(p, "undead.ai")
+elseif (Race == RACE_NIGHTELF) then
+StartMeleeAI(p, "elf.ai")
+else
+StartMeleeAI(p, "human.ai")
+end
+end
+function Ai_Research(p, Race)
+TimerFunction(60, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver == false) then
+if (GetPlayerGold(p) >= Constant.Value.AiResearchMinGold and GetPlayerLumber(p) >= Constant.Value.AiResearchMinLumber) then
+local Research = Constant.PlayerData[p]["Research"]
+if (Research < 4) then
+local Finished = true
+local ResearchList = Constant.Research[Race][Research]
+for i = 1, #ResearchList do
+local NowResearch = ResearchList[i]["Item"]
+if (GetPlayerTechCount(p, NowResearch, true) < Constant.Value.ResearchMaxLevel) then
+local Structure = ResearchList[i]["Structure"]
+if (type(Structure) == "table") then
+for j = 1, 10 do
+AiPlayerResearch(p, NowResearch, Structure[j])
+end
+else
+AiPlayerResearch(p, NowResearch, Structure)
+end
+Finished = false
+end
+end
+if (Finished) then
+Constant.PlayerData[p]["Research"] = Constant.PlayerData[p]["Research"] + 1
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Ai_Build(p, Race)
+local FoodStructureType, ShopType = Constant.UnitType.FoodStructure[Race], Constant.UnitType.Shop[Race]
+TimerFunction(Constant.Time.AiBuildInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver == false) then
+local Builders = nil
+if (GetPlayerState(p, PLAYER_STATE_RESOURCE_FOOD_CAP) < 200) then
+Builders = GetPlayerIdleBuilders(p)
+if (#Builders > 0) then
+Build(Builders[GetRandomInt(1, #Builders)], FoodStructureType)
+end
+end
+if (GetPlayerUnitTypeCount(p, ShopType) < Constant.Number.AiShop) then
+if (Builders == nil) then
+Builders = GetPlayerIdleBuilders(p)
+end
+if (#Builders > 0) then
+Build(Builders[GetRandomInt(1, #Builders)], ShopType)
+end
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Ai_BuyWork(p)
+TimerFunction(Constant.Time.AiBuyWorkerInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver == false) then
+if (GetPlayerUnitTypeCount(p, Constant.UnitType.GoblinMiner) < Constant.Number.AiBuyGoblinMiner) then
+BuyWorker(p, Constant.UnitType.GoblinMiner)
+end
+if (GetPlayerUnitTypeCount(p, Constant.UnitType.IronGoblin) < Constant.Number.AiBuyIronGoblin) then
+BuyWorker(p, Constant.UnitType.IronGoblin)
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Ai_GoblinMinerMining(p)
+TimerFunction(Constant.Time.AiGoblinMinerActionInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver == false) then
+if (GetPlayerUnitTypeCount(p, Constant.UnitType.GoblinMiner) > 0) then
+local Target = Constant.PlayerData[p]["GoblinMinerTarget"]
+if (Target == nil or not UnitIsAlive(Target) or IsUnitHidden(Target)) then
+Constant.PlayerData[p]["GoblinMinerTarget"] = nil
+local GoldMines={}
+for i = 1, #Constant.Group.GoldMines do
+local GoldMine = Constant.Group.GoldMines[i]
+if (IsUnitVisible(GoldMine, p) and UnitIsAlive(GoldMine) and not IsUnitHidden(GoldMine)) then
+table.insert(GoldMines,GoldMine)
+end
+end
+if(#GoldMines>0)then
+Constant.PlayerData[p]["GoblinMinerTarget"] = GoldMines[GetRandomInt(1,#GoldMines)]
+end
+else
+local Workers = {}
+local g = CreateGroup()
+GroupEnumUnitsOfType(g, "chaospeon", nil)
+ForGroup(g, function()
+local u = GetEnumUnit()
+if (GetOwningPlayer(u) == p and UnitIsAlive(u) and not IsUnitHidden(u) and GetUnitCurrentOrder(u)==0) then
+IssueTargetOrder(u, "harvest", Target)
+table.insert(Workers, u)
+end
+end)
+DestroyGroup(g)
+local Receiver = Constant.PlayerData[p]["GoblinMinerReceiver"]
+if (Receiver == nil or not UnitIsAlive(Receiver) or not IsUnitOwnedByPlayer(Receiver, p)) then
+Constant.PlayerData[p]["GoblinMinerReceiver"] = nil
+local X, Y = GetUnitX(Target), GetUnitY(Target)
+EnumUnitsInRangeDoActionAtCoordinate(X, Y, 1500, function(EnumUnit)
+if (UnitHaveSkill(EnumUnit, Constant.Skill.ReceiveGoldAndLumber) and IsUnitOwnedByPlayer(EnumUnit, p) and UnitIsAlive(EnumUnit)) then
+Constant.PlayerData[p]["GoblinMinerReceiver"] = EnumUnit
+return true
+end
+end)
+local WorkersNumber = #Workers
+if (Constant.PlayerData[p]["GoblinMinerReceiver"] == nil and WorkersNumber > 0) then
+local Builder = Workers[GetRandomInt(1, WorkersNumber)]
+for i = 1, Constant.Value.BuildTryMax do
+if (IssueBuildOrderById(Builder, Constant.UnitType.Warehouse, GetRandomReal(X - 1000, X + 1000), GetRandomReal(Y - 1000, Y + 1000))) then
+break
+end
+end
+end
+end
+end
+else
+Constant.PlayerData[p]["GoblinMinerTarget"]=nil
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Ai_BuyHero(p)
+TimerFunction(Constant.Time.AiRebornHeroInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver==false and Constant.PlayerData[p]["HeroNumber"] < Constant.Number.MaxHero) then
+for i = 1, #Constant.Group.Taverns do
+IssueNeutralImmediateOrderById(p, Constant.Group.Taverns[i], Constant.UnitType.ExtraHero[GetRandomInt(1, #Constant.UnitType.ExtraHero)])
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Ai_KillDying(p, u, hp)
+local IsGround = IsUnitType(u, UNIT_TYPE_GROUND)
+local DamageValue = 0
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), 600, function(Target)
+if (DamageValue < hp) then
+if (gcudFilter({ "Alive", "AllianceUnit", "NotStructure" }, { MainUnit = Target, MainPlayer = p }) and InOrderedTable(GetOwningPlayer(Target), Constant.Group.AiPlayers) and not IsUnitType(Target, UNIT_TYPE_PEON) and Target ~= u) then
+if ((IsGround and IsUnitType(Target, UNIT_TYPE_ATTACKS_GROUND)) or (not IsGround and IsUnitType(Target, UNIT_TYPE_ATTACKS_FLYING))) then
+IssueTargetOrder(Target, "attack", u)
+DamageValue = DamageValue + (GetUnitLevel(Target) * Constant.Value.KillDyingDamageRate)
+end
+end
+else
+return true
+end
+end)
+end
+function Ai_ReBornHero(p, h)
+TimerFunction(Constant.Time.AiRebornHeroInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver==false) then
+if (UnitIsAlive(h)) then
+DestroyTimer(GetExpiredTimer())
+else
+local Result = false
+for i = 1, #Constant.Group.Taverns do
+if (IssueNeutralTargetOrder(p, Constant.Group.Taverns[i], "awaken", h)) then
+Result = true
+break
+end
+end
+if (not Result) then
+local Altars = {}
+local g = CreateGroup()
+GroupEnumUnitsOfPlayer(g, p, nil)
+ForGroup(g, function()
+local Target = GetEnumUnit()
+local ut = GetUnitTypeId(Target)
+if (InOrderedTable(ut, Constant.UnitType.Altar) and UnitIsAlive(Target)) then
+table.insert(Altars, Target)
+end
+end)
+DestroyGroup(g)
+if (#Altars > 0) then
+IssueTargetOrder(Altars[GetRandomInt(1, #Altars)], "revive", h)
+end
+end
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Skill_HolyBolt(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "holybolt"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (UnitIsAlive(Target) and IsHero(Target)) then
+if (IsUnitEnemy(Target, p)) then
+if (IsUnitType(Target, UNIT_TYPE_UNDEAD) and not IsUnitType(Target, UNIT_TYPE_MAGIC_IMMUNE)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+elseif (GetUnitHPRate(Target) < 0.5 and not IsUnitType(Target, UNIT_TYPE_UNDEAD)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end
+end)
+end
+function Skill_Banish(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "banish"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Banish)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_StormBolt(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "thunderbolt"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_HealingWave(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "healingwave"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "AllianceUnit", "Alive" }, { MainUnit = Target, MainPlayer = p }) and GetUnitHPRate(Target) < 0.5) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_Hex(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "hex"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Hex)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_WarStomp(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "stomp"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellEffectRange(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Stun)) then
+IssueImmediateOrder(u, OrderString)
+return true
+end
+end)
+end
+function Skill_ChainLightning(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "chainlightning"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_DeathPact(u, Skill)
+if (GetUnitHPRate(u) < 0.5) then
+local p = GetOwningPlayer(u)
+local OrderString = "deathpact"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (IsUnitType(Target, UNIT_TYPE_UNDEAD) and gcudFilter({ "Visible", "Alive", "NotStructure", "NotHero", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+end
+function Skill_DeathCoil(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "deathcoil"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (UnitIsAlive(Target) and IsHero(Target)) then
+if (IsUnitEnemy(Target, p)) then
+if (not IsUnitType(Target, UNIT_TYPE_MAGIC_IMMUNE) and not IsUnitType(Target, UNIT_TYPE_UNDEAD)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+elseif (IsUnitType(Target, UNIT_TYPE_UNDEAD) and GetUnitHPRate(Target) < 0.5) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end
+end)
+end
+function Skill_Impale(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "impale"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Impale)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_CarrionSwarm(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "carrionswarm"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssuePointOrder(u, OrderString, GetUnitX(Target), GetUnitY(Target))
+return true
+end
+end)
+end
+function Skill_FrostNova(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "frostnova"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_DarkRitual(u, Skill)
+if (GetUnitMPRate(u) < 0.5) then
+local p = GetOwningPlayer(u)
+local OrderString = "darkritual"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (IsUnitType(Target, UNIT_TYPE_UNDEAD) and gcudFilter({ "Visible", "Alive", "NotStructure", "NotHero", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+end
+function Skill_FanOfKnives(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "fanofknives"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellEffectRange(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive" }, { MainUnit = Target, MainPlayer = p })) then
+IssueImmediateOrder(u, OrderString)
+return true
+end
+end)
+end
+function Skill_ShadowStrike(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "shadowstrike"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target,Constant.Buff.ShadowStrike)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_ManaBurn(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "manaburn"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_EntanglingRoots(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "entanglingroots"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_ForkedLightning(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "banish"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_HowlOfTerror(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "howlofterror"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellEffectRange(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.HowlOfTerror)) then
+IssueImmediateOrder(u, OrderString)
+return true
+end
+end)
+end
+function Skill_Doom(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "doom"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "NotInvulnerable", "Visible", "Alive" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Doom)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_Silence(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "silence"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.Silence)) then
+IssuePointOrder(u, OrderString, GetUnitX(Target), GetUnitY(Target))
+return true
+end
+end)
+end
+function Skill_BreathOfFire(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "breathoffire"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssuePointOrder(u, OrderString, GetUnitX(Target), GetUnitY(Target))
+return true
+end
+end)
+end
+function Skill_SoulBurn(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "soulburn"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.SoulBurn)) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_LifeDrain(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "drain"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p })) then
+IssueTargetOrder(u, OrderString, Target)
+return true
+end
+end)
+end
+function Skill_StrongDrink(u, Skill)
+local p = GetOwningPlayer(u)
+local OrderString = "drunkenhaze"
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u), GetUnitY(u), GetUnitSkillNowSpellDistance(u, Skill), function(Target)
+if (gcudFilter({ "Hero", "EnemyUnit", "Visible", "Alive", "NotMagicImmune" }, { MainUnit = Target, MainPlayer = p }) and not UnitHaveSkill(Target, Constant.Buff.StrongDrink)) then
+IssueTargetOrder(u, OrderString, Target)
+DebugMessage(GetPlayerName(p) .. "的" .. GetUnitName(u) .. "向" .. GetUnitName(Target) .. "施放醉酒云雾")
+return true
+end
+end)
+end
+function Skill_AllStructureRepair(Structure)
+for i = 1, #Constant.Group.AllStructureRepairHero do
+local u = Constant.Group.AllStructureRepairHero[i]
+if (UnitIsAlive(u) and IsUnitAlly(Structure, GetOwningPlayer(u)) and UnitSkillIsCollDown(u, Constant.Skill.AllStructureRepair) and UnitSkillNowMagicalIsEnough(u, Constant.Skill.AllStructureRepair)) then
+if (IssueImmediateOrder(u, "thunderclap")) then
+break
+end
+end
+end
+end
+function RegisterHeroAi(h)
+HeroAi_UseItem_Time(h)
+HeroAi_RegisterInRange(h)
+HeroAi_LearnSkill(h)
+end
+function HeroAi_RegisterInRange(h)
+local p = GetOwningPlayer(h)
+local t = CreateTrigger()
+TriggerRegisterUnitInRange(t, h, 450)
+TriggerAddAction(t, function()
+local u = GetTriggerUnit()
+if (UnitHaveSkill(u, Constant.Skill.BuyItem) and IssueNeutralTargetOrder(p, u, "neutralinteract", h)) then
+HeroAi_BuyItem(p, u, h)
+end
+end)
+end
+function HeroAi_UseItem_Time(h)
+local p = GetOwningPlayer(h)
+TimerFunction(Constant.Time.HeroAiUseItemInterval, function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver==false) then
+if (UnitIsAlive(h)) then
+local HpRate, MpRate = GetUnitHPRate(h), GetUnitMPRate(h)
+if (HpRate < 0.5 or MpRate < 0.5) then
+for i = 0, 5 do
+local Item = UnitItemInSlot(h, i)
+if (Item ~= nil) then
+local ItemType = GetItemTypeId(Item)
+if (HpRate < 0.5 and (ItemType == Constant.ItemType.HugeHpPotion or ItemType == Constant.ItemType.HpPotion or ItemType == Constant.ItemType.HealingScroll)) then
+UnitUseItem(h, Item)
+elseif (MpRate < 0.5 and (ItemType == Constant.ItemType.HugeManaPotion or ItemType == Constant.ItemType.ManaPotion)) then
+UnitUseItem(h, Item)
+end
+end
+end
+end
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function HeroAi_BuyItem(p, Shopper, h)
+local UnitType = GetUnitTypeId(Shopper)
+local HasBase = HasRaceBase(p)
+if (UnitType == Constant.UnitType.BlackStoreBusiness) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.ProtectPotion)
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.ReBorn)
+if (not UnitHaveTypeItem(h, Constant.ItemType.DefendMagic)) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.DefendMagic)
+end
+if (not HasBase) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.MostBase)
+end
+else
+if (UnitType == Constant.UnitType.GoblinShop) then
+else
+local HasBall = UnitHaveTypeItem(h, Constant.ItemType.FrameBall) or UnitHaveTypeItem(h, Constant.ItemType.SlowBall) or UnitHaveTypeItem(h, Constant.ItemType.WeakenBall) or UnitHaveTypeItem(h, Constant.ItemType.PoisonousBall)
+if (UnitType == Constant.UnitType.Shop[RACE_ORC]) then
+if (not HasBall) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.SlowBall)
+end
+if (not HasBase) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.Base)
+end
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.HugeHpPotion)
+elseif (UnitType == Constant.UnitType.Shop[RACE_HUM]) then
+if (not HasBall) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.FrameBall)
+end
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.HugeManaPotion)
+elseif (UnitType == Constant.UnitType.Shop[RACE_UNDEAD]) then
+if (not HasBall) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.WeakenBall)
+end
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.HealingScroll)
+else
+if (not HasBall) then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.PoisonousBall)
+end
+end
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.HpPotion)
+if(GetUnitMagical(h)<500)then
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.ManaPotion)
+end
+end
+end
+IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.BackBase)
+end
+function HeroAi_Dying(h)
+if (not IssueImmediateOrder(h, "divineshield")) then
+if (not IssueImmediateOrder(h, "windwalk")) then
+for i = 0, 5 do
+local Item = UnitItemInSlot(h, i)
+if (Item ~= nil) then
+local ItemType = GetItemTypeId(Item)
+if (ItemType == Constant.ItemType.ProtectPotion) then
+if (UnitUseItem(h, Item)) then
+break
+end
+elseif (ItemType == Constant.ItemType.HidePotion) then
+if (UnitUseItem(h, Item)) then
+break
+end
+elseif (ItemType == Constant.ItemType.BackBase) then
+if (UnitUseItemTarget(h, Item, Item)) then
+break
+end
+end
+end
+end
+end
+end
+end
+function HeroAi_LearnSkill(Hero)
+local Level, HeroId = GetUnitLevel(Hero), GetUnitTypeId(Hero)
+SelectHeroSkill(Hero, Constant.LearnSKill[HeroId][Level])
+end
+function HeroAi_UseBaseItem(Hero)
+local p = GetOwningPlayer(Hero)
+TimerFunction(10, function()
+if ((UnitHaveTypeItem(Hero, Constant.ItemType.Base) or UnitHaveTypeItem(Hero, Constant.ItemType.MostBase)) and InOrderedTable(p, Constant.Group.AiPlayers) and Constant.GameOver==false) then
+if(UnitIsAlive(Hero))then
+for i = 0, 5 do
+local Item = UnitItemInSlot(Hero, i)
+local ItemType = GetItemTypeId(Item)
+if (ItemType == Constant.ItemType.Base or ItemType == Constant.ItemType.MostBase) then
+UnitUseItemPoint(Hero, Item, GetUnitX(Hero), GetUnitY(Hero))
+break
+end
+end
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function InitSkill(h, s)
+local SkillFun = nil
+if (s == Constant.Skill.HolyBolt) then
+SkillFun = Skill_HolyBolt
+elseif (s == Constant.Skill.StormBolt) then
+SkillFun = Skill_StormBolt
+elseif (s == Constant.Skill.Banish) then
+SkillFun = Skill_Banish
+elseif (s == Constant.Skill.ChainLightning) then
+SkillFun = Skill_ChainLightning
+elseif (s == Constant.Skill.HealingWave) then
+SkillFun = Skill_HealingWave
+elseif (s == Constant.Skill.WarStomp) then
+SkillFun = Skill_WarStomp
+elseif (s == Constant.Skill.Hex) then
+SkillFun = Skill_Hex
+elseif (s == Constant.Skill.DeathCoil) then
+SkillFun = Skill_DeathCoil
+elseif (s == Constant.Skill.DeathPact) then
+SkillFun = Skill_DeathPact
+elseif (s == Constant.Skill.FrostNova) then
+SkillFun = Skill_FrostNova
+elseif (s == Constant.Skill.DarkRitual) then
+SkillFun = Skill_DarkRitual
+elseif (s == Constant.Skill.CarrionSwarm) then
+SkillFun = Skill_CarrionSwarm
+elseif (s == Constant.Skill.Impale) then
+SkillFun = Skill_Impale
+elseif (s == Constant.Skill.EntanglingRoots) then
+SkillFun = Skill_EntanglingRoots
+elseif (s == Constant.Skill.ManaBurn) then
+SkillFun = Skill_ManaBurn
+elseif (s == Constant.Skill.FanOfKnives) then
+SkillFun = Skill_FanOfKnives
+elseif (s == Constant.Skill.ShadowStrike) then
+SkillFun = Skill_ShadowStrike
+elseif (s == Constant.Skill.ForkedLightning) then
+SkillFun = Skill_ForkedLightning
+elseif (s == Constant.Skill.AllStructureRepair) then
+table.insert(Constant.Group.AllStructureRepairHero, h)
+elseif (s == Constant.Skill.HowlOfTerror) then
+SkillFun = Skill_HowlOfTerror
+elseif (s == Constant.Skill.Doom) then
+SkillFun = Skill_Doom
+elseif (s == Constant.Skill.SoulBurn) then
+SkillFun = Skill_SoulBurn
+elseif (s == Constant.Skill.BreathOfFire) then
+SkillFun = Skill_BreathOfFire
+elseif (s == Constant.Skill.StrongDrink) then
+SkillFun = Skill_StrongDrink
+elseif (s == Constant.Skill.Silence) then
+SkillFun = Skill_Silence
+elseif (s == Constant.Skill.LifeDrain) then
+SkillFun = Skill_LifeDrain
+end
+if (SkillFun ~= nil) then
+BindHeroTimerSkill(h, s, SkillFun)
+end
+end
+function BindHeroTimerSkill(h, s, SkillFun)
+local p = GetOwningPlayer(h)
+TimerFunction(GetRandomReal(3, 10), function()
+if (InOrderedTable(p, Constant.Group.AiPlayers) and UnitIsExist(h) and Constant.GameOver==false) then
+local NowOrder = GetUnitCurrentOrder(h)
+if ((NowOrder == Constant.Command.Attack or NowOrder == Constant.Command.Move or NowOrder==Constant.Command.AiMove) and UnitIsAlive(h) and UnitSkillIsCollDown(h, s) and UnitSkillNowMagicalIsEnough(h, s)) then
+SkillFun(h, s)
+end
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function InitBaseConstant()
+InitBaseConstant=nil
+Base={
+Version="20200308",
+LeftX=GetCameraBoundMinX() - GetCameraMargin(CAMERA_MARGIN_LEFT),
+RightX=GetCameraBoundMaxX() + GetCameraMargin(CAMERA_MARGIN_RIGHT),
+DownY=GetCameraBoundMinY() - GetCameraMargin(CAMERA_MARGIN_BOTTOM),
+UpY=GetCameraBoundMaxY() + GetCameraMargin(CAMERA_MARGIN_TOP),
+MAP_AREA=nil,
+NEUTRAL_PASSIVE=Player(PLAYER_NEUTRAL_PASSIVE),
+NEUTRAL_AGGRESSIVE=Player(PLAYER_NEUTRAL_AGGRESSIVE),
+DEGTORAD=0.01745329251994329576
+}
+Base.MAP_AREA=Rect(Base.LeftX,Base.DownY,Base.RightX,Base.UpY)
+end
+function Log(Message)
+Preload(Message)
+PreloadGenEnd("MapLog.txt")
+end
+function DebugMessage(Variable,...)
+local Parameters = { ... }
+local Name = ""
+if (#Parameters > 0) then
+Name = "[" .. Parameters[1] .. "]"
+end
+if (Variable== true) then
+Variable = "true"
+elseif (Variable == false) then
+Variable = "false"
+elseif (Variable== nil) then
+Variable= "nil"
+end
+print("|cffff0000Debug信息开始|r" .. Name ..Variable .. "|cffff0000Debug信息结束|r")
+Log(Name .. Variable)
+end
+function DisplayMessage(Message,...)
+local Parameters = { ... }
+local p = Parameters[1]
+if (p == nil) then
+p = GetLocalPlayer()
+end
+if (Parameters[2] == true) then
+Message = "|cffff0000" .. Message .. "|r"
+end
+local Time=Parameters[3]
+if (Time~=nil and Time> 0) then
+DisplayTimedTextToPlayer(p, 0, 0,Time, Message)
+else
+DisplayTextToPlayer(p, 0, 0, Message)
+end
+end
+function IntegerToString(Integer)
+return ('>I4'):pack(Integer)
+end
+function StringToInteger(String)
+local Value = ('>I4'):unpack(String)
+return Value
+end
+function CreateUnitAtCoordinate(Owner, Id, X, Y)
+return CreateUnit(Owner, Id, X, Y, 0)
+end
+function UnitHaveSkill(U, SkillId)
+return GetUnitAbilityLevel(U, SkillId) > 0
+end
+function UnitIsExist(U)
+return GetUnitState(U, UNIT_STATE_MAX_LIFE) > 0
+end
+function IsHero(U)
+return IsUnitType(U, UNIT_TYPE_HERO)
+end
+function SetPlayerCameraCoordinate(P, X, Y)
+if (GetLocalPlayer() == P) then
+SetCameraPosition(X, Y)
+end
+end
+function UnitIsAlive(U)
+return GetUnitState(U, UNIT_STATE_LIFE) > 0
+end
+function GetUnitMagical(U)
+return GetUnitState(U, UNIT_STATE_MANA)
+end
+function GetRandomX()
+return GetRandomReal(Base.LeftX, Base.RightX)
+end
+function GetRandomY()
+return GetRandomReal(Base.DownY, Base.UpY)
+end
+function GetAvailableGroundUnitCoordinate()
+local X, Y = GetRandomX(), GetRandomY()
+while (IsTerrainPathable(X, Y, PATHING_TYPE_WALKABILITY)) do
+X, Y = GetRandomX(), GetRandomY()
+end
+return { X, Y }
+end
+function CreateUnitAtRandomPosition(Owner, Id)
+return CreateUnitAtCoordinate(Owner, Id, GetRandomX(), GetRandomY())
+end
+function GetAngleOffsetXCoordinate(Coordinate, Angle, OffsetValue)
+return Coordinate + math.cos(Angle * Base.DEGTORAD) * OffsetValue
+end
+function GetAngleOffsetYCoordinate(Coordinate, Angle, OffsetValue)
+return Coordinate + math.sin(Angle * Base.DEGTORAD) * OffsetValue
+end
+function IsAttackDamage()
+return BlzGetEventAttackType() ~= ATTACK_TYPE_NORMAL and BlzGetEventDamageType() == DAMAGE_TYPE_NORMAL
+end
+function IsPhysicalDamage()
+return BlzGetEventDamageType() == DAMAGE_TYPE_NORMAL
+end
+function TimerFunction(Interval, Fun)
+local T = CreateTimer()
+TimerStart(T, Interval, true, function()
+Fun()
+end)
+end
+function TimerFunctionOnce(Time, Fun)
+local T = CreateTimer()
+TimerStart(T, Time, false, function()
+Fun()
+DestroyTimer(T)
+end)
+end
+function gcudFilter(FilterItems, Parameters)
+local Result = true;
+for i = 1, #FilterItems do
+if (Result == false) then
+break
+else
+local FilterItem = FilterItems[i]
+if (FilterItem == "AliveUnit") then
+Result = Result and UnitIsAlive(Parameters.MainUnit)
+elseif (FilterItem == "AllianceUnit") then
+Result = Result and IsUnitAlly(Parameters.MainUnit, Parameters.MainPlayer) and GetOwningPlayer(Parameters.MainUnit) ~= Base.NEUTRAL_PASSIVE
+elseif (FilterItem == "EnemyUnit") then
+Result = Result and IsUnitEnemy(Parameters.MainUnit, Parameters.MainPlayer)
+elseif (FilterItem == "Structure") then
+Result = Result and IsUnitType(Parameters.MainUnit, UNIT_TYPE_STRUCTURE)
+elseif (FilterItem == "NotStructure") then
+Result = Result and not IsUnitType(Parameters.MainUnit, UNIT_TYPE_STRUCTURE)
+elseif (FilterItem == "Hero") then
+Result = Result and IsUnitType(Parameters.MainUnit, UNIT_TYPE_HERO)
+elseif (FilterItem == "NotHero") then
+Result = Result and not IsUnitType(Parameters.MainUnit, UNIT_TYPE_HERO)
+elseif (FilterItem == "NotMagicImmune") then
+Result = Result and not IsUnitType(Parameters.MainUnit, UNIT_TYPE_MAGIC_IMMUNE)
+elseif (FilterItem == "Visible") then
+Result = Result and IsUnitVisible(Parameters.MainUnit, Parameters.MainPlayer)
+elseif (FilterItem == "NotInvulnerable") then
+Result = Result and not BlzIsUnitInvulnerable(Parameters.MainUnit)
+end
+end
+end
+return Result
+end
+function InOrderedTable(Value, Table)
+for i = 1, #Table do
+if (Table[i] ~= nil and Table[i] == Value) then
+return true
+end
+end
+return false
+end
+function OrderTableRemoveItem(Table, Item)
+for i = 1, #Table do
+if (Table[i] == Item) then
+table.remove(Table, i)
+break
+end
+end
+end
+function EnumUnitsInRangeDoActionAtCoordinate(X, Y, Range, fun)
+local g = CreateGroup()
+GroupEnumUnitsInRange(g, X, Y, Range, nil)
+local Size=BlzGroupGetSize(g)
+if(Size>0)then
+for i = 1, Size do
+local u=BlzGroupUnitAt(g,0)
+GroupRemoveUnit(g,u)
+local IsBreak=fun(u)
+if(IsBreak)then
+break
+end
+end
+end
+DestroyGroup(g)
+end
+function GetPlayerUnitsCount(p)
+return GetPlayerUnitCount(p) + GetPlayerStructureCount(p, true)
+end
+function IsStructure(u)
+return IsUnitType(u, UNIT_TYPE_STRUCTURE)
+end
+function GetUnitHP(u)
+return GetUnitState(u, UNIT_STATE_LIFE)
+end
+function StringSplit(Str, SplitString)
+local Strings = {}
+local SplitStringLength = string.len(SplitString)
+while (true) do
+local StartIndex, EndIndex = string.find(Str, SplitString)
+if (StartIndex == nil) then
+if (Str ~= "") then
+table.insert(Strings, Str)
+end
+break
+else
+table.insert(Strings, string.sub(Str, 1, StartIndex - SplitStringLength))
+Str = string.sub(Str, EndIndex + SplitStringLength)
+end
+end
+return Strings
+end
+function GetPlayerGold(p)
+return GetPlayerState(p,PLAYER_STATE_RESOURCE_GOLD)
+end
+function GetPlayerLumber(p)
+return GetPlayerState(p,PLAYER_STATE_RESOURCE_LUMBER)
+end
+function GetNowTimeString()
+return os.date("%%Y年%%m月%%d日%%H时%%M分%%S秒")
+end
+function GetUnitHPRate(u)
+local MaxHP=BlzGetUnitMaxHP(u)
+if(MaxHP>0)then
+return GetUnitState(u,UNIT_STATE_LIFE)/MaxHP
+else
+return 0
+end
+end
+function GetUnitMPRate(u)
+local MaxMP=BlzGetUnitMaxMana(u)
+if(MaxMP>0)then
+return GetUnitState(u,UNIT_STATE_MANA)/MaxMP
+else
+return 0
+end
+end
+function UnitHaveTypeItem(u,ItemType)
+for i = 0, 5 do
+local Item=UnitItemInSlot(u,i)
+if(Item~=nil and GetItemTypeId(Item)==ItemType)then
+return true
+end
+end
+return false
+end
+function UnitSkillIsCollDown(u,a)
+return BlzGetUnitAbilityCooldownRemaining(u,a)==0
+end
+function ModifyUnitArmor(U,Value,IsAdd)
+local Armor=BlzGetUnitArmor(U)
+if (IsAdd) then
+BlzSetUnitArmor(U,Armor + Value)
+else
+BlzSetUnitArmor(U,Armor - Value)
+end
+end
+function ModifyUnitHP(U,Value,IsAdd)
+local HP=GetUnitState(U,UNIT_STATE_LIFE)
+if (IsAdd) then
+SetUnitState(U,UNIT_STATE_LIFE,HP + Value)
+else
+SetUnitState(U,UNIT_STATE_LIFE,HP - Value)
+end
+end
+function ModifyUnitMagical(U,Value,IsAdd)
+local Magical=GetUnitMagical(U)
+if (IsAdd) then
+SetUnitState(U,UNIT_STATE_MANA,Magical + Value)
+else
+SetUnitState(U,UNIT_STATE_MANA,Magical - Value)
+end
+end
+function ModifyUnitMaxHP(U,Value,IsAdd)
+local MaxHP=BlzGetUnitMaxHP(U)
+if (IsAdd) then
+BlzSetUnitMaxHP(U,MaxHP + Value)
+else
+BlzSetUnitMaxHP(U,MaxHP - Value)
+end
+end
+function ModifyUnitAttackPower(U,Value,IsAdd)
+local AttackPower1,AttackPower2=BlzGetUnitBaseDamage(U,0),BlzGetUnitBaseDamage(U,1)
+if (IsAdd) then
+BlzSetUnitBaseDamage(U,AttackPower1 + Value,0)
+BlzSetUnitBaseDamage(U,AttackPower2 + Value,1)
+else
+BlzSetUnitBaseDamage(U,AttackPower1 - Value,0)
+BlzSetUnitBaseDamage(U,AttackPower2 - Value,1)
+end
+end
+function ModifyHeroStrength(Hero,Value,IsAdd)
+local Strength=GetHeroStr(Hero,false)
+if (IsAdd) then
+SetHeroStr(Hero,Strength + Value)
+else
+SetHeroStr(Hero,Strength - Value)
+end
+end
+function ModifyHeroAgile(Hero,Value,IsAdd)
+local Agile=GetHeroAgi(Hero,false)
+if (IsAdd) then
+SetHeroAgi(Hero,Agile + Value)
+else
+SetHeroAgi(Hero,Agile - Value)
+end
+end
+function ModifyHeroIntelligence(Hero,Value,IsAdd)
+local Intelligence=GetHeroInt(Hero,false)
+if (IsAdd) then
+SetHeroInt(Hero,Intelligence + Value)
+else
+SetHeroInt(Hero,Intelligence - Value)
+end
+end
+function ModifyPlayerGold(P,Value,IsAdd)
+local Gold=GetPlayerState(P,PLAYER_STATE_RESOURCE_GOLD)
+if (IsAdd) then
+SetPlayerState(P,PLAYER_STATE_RESOURCE_GOLD,Gold + Value)
+else
+SetPlayerState(P,PLAYER_STATE_RESOURCE_GOLD,Gold - Value)
+end
+end
+function ModifyPlayerLumber(P,Value,IsAdd)
+local Gold=GetPlayerState(P,PLAYER_STATE_RESOURCE_LUMBER)
+if (IsAdd) then
+SetPlayerState(P,PLAYER_STATE_RESOURCE_LUMBER,Gold + Value)
+else
+SetPlayerState(P,PLAYER_STATE_RESOURCE_LUMBER,Gold - Value)
+end
+end
+function CommandHandle(p,Message)
+if (string.sub(Message,1,1) == "-") then
+local Parameters=StringSplit(string.sub(Message,2)," ")
+local Command=Parameters[1]
+if (Command == "cl") then
+Command_cl(p)
+elseif (Command == "ms") then
+Command_ms(p)
+elseif (Command == "giun") then
+local TargetPlayer=Player(Parameters[2])
+local u=Constant.PlayerData[p]["SelectedUnit"]
+if (GetHandleId(TargetPlayer) > 0 and IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers) and UnitIsAlive(u) and IsUnitOwnedByPlayer(u,p) and not IsHero(u)) then
+Command_giun(p,TargetPlayer,u)
+end
+elseif (Command == "neun") then
+local u=Constant.PlayerData[p]["SelectedUnit"]
+local TargetPlayer=GetOwningPlayer(u)
+if (IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers) and UnitIsAlive(u) and not IsHero(u)) then
+Command_neun(p,TargetPlayer,u)
+end
+elseif (Command == "ng") then
+local TargetPlayer=Player(Parameters[2])
+local Value=math.floor(Parameters[3])
+if (Value > 0 and Value >= Constant.Value.AiSourceDealWithMin and Value <= Constant.Value.AiSourceDealWithMax and GetHandleId(TargetPlayer) > 0 and IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers) and Value <= GetPlayerGold(TargetPlayer)) then
+Command_ng(p,TargetPlayer,Value)
+end
+elseif (Command == "nw") then
+local TargetPlayer=Player(Parameters[2])
+local Value=math.floor(Parameters[3])
+if (Value > 0 and Value >= Constant.Value.AiSourceDealWithMin and Value <= Constant.Value.AiSourceDealWithMax and GetHandleId(TargetPlayer) > 0 and IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers) and Value <= GetPlayerLumber(TargetPlayer)) then
+Command_nw(p,TargetPlayer,Value)
+end
+elseif (Command == "gg") then
+local TargetPlayer=Player(Parameters[2])
+local Value=math.floor(Parameters[3])
+if (Value > 0 and Value >= Constant.Value.AiSourceDealWithMin and Value <= Constant.Value.AiSourceDealWithMax and Value <= GetPlayerGold(p) and GetHandleId(TargetPlayer) > 0 and IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers)) then
+Command_gg(p,TargetPlayer,Value)
+end
+elseif (Command == "gw") then
+local TargetPlayer=Player(Parameters[2])
+local Value=math.floor(Parameters[3])
+if (Value > 0 and Value >= Constant.Value.AiSourceDealWithMin and Value <= Constant.Value.AiSourceDealWithMax and Value <= GetPlayerLumber(p) and GetHandleId(TargetPlayer) > 0 and IsPlayerAlly(TargetPlayer,p) and TargetPlayer ~= Base.NEUTRAL_PASSIVE and InOrderedTable(TargetPlayer,Constant.Group.AiPlayers)) then
+Command_gw(p,TargetPlayer,Value)
+end
+elseif (Command == "ci") then
+Command_ci(p)
+end
+end
+end
+function Command_cl(p)
+DisplayMessage([[命令列表(所有命令必须在前面添加-)
+[常用]
+ms 查看选中的第一个单位移速
+cl 查看命令列表
+[控制权(不可更改英雄的控制权)]
+giun 玩家id 转让选择单位给AI队友
+neun 向AI队友请求转让选择单位
+玩家id可在游戏面板进行查看]],p)
+TimerFunctionOnce(10,function()
+DisplayMessage([[[资源]
+ng 玩家id 资源量 向AI队友请求黄金
+nw 玩家id 资源量 向AI队友请求木材
+gg 玩家id 资源量 给予AI队友黄金
+gw 玩家id 资源量 给予AI队友木材
+[其它]
+ci 在30秒后清理地图上的物品
+所有命令只有在输入正确时才有响应]],p)
+end)
+end
+function Command_ms(p)
+DisplayMessage("移动速度" .. GetUnitMoveSpeed(Constant.PlayerData[p]["SelectedUnit"]),p)
+end
+function Command_giun(p,TargetPlayer,u)
+SetUnitOwner(u,TargetPlayer,true)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "向" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. "转让了" .. GetUnitName(u) .. "的控制权",nil,true,30)
+end
+function Command_neun(p,TargetPlayer,u)
+SetUnitOwner(u,p,true)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "向" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. "请求并获得了" .. GetUnitName(u) .. "的控制权",nil,true,30)
+end
+function Command_ng(p,TargetPlayer,Value)
+local RealValue=math.ceil(Value * Constant.Value.AiSourceDealWithRate)
+ModifyPlayerGold(TargetPlayer,Value,false)
+ModifyPlayerGold(p,RealValue,true)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "向" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. "请求" .. Value .. "黄金,实际获得" .. RealValue,nil,true,30)
+end
+function Command_nw(p,TargetPlayer,Value)
+local RealValue=math.ceil(Value * Constant.Value.AiSourceDealWithRate)
+ModifyPlayerLumber(TargetPlayer,Value,false)
+ModifyPlayerLumber(p,RealValue,true)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "向" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. "请求" .. Value .. "木材,实际获得" .. RealValue,nil,true,30)
+end
+function Command_gg(p,TargetPlayer,Value)
+local RealValue=math.ceil(Value * Constant.Value.AiSourceDealWithRate)
+ModifyPlayerGold(TargetPlayer,RealValue,true)
+ModifyPlayerGold(p,Value,false)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "给予" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. Value .. "黄金,实际获得" .. RealValue,nil,true,30)
+end
+function Command_gw(p,TargetPlayer,Value)
+local RealValue=math.ceil(Value * Constant.Value.AiSourceDealWithRate)
+ModifyPlayerLumber(TargetPlayer,RealValue,true)
+ModifyPlayerLumber(p,Value,false)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "给予" .. Constant.PlayerData[TargetPlayer]["DisplayName"] .. Value .. "木材,实际获得" .. RealValue,nil,true,30)
+end
+function Command_ci(p)
+DisplayMessage(Constant.PlayerData[p]["DisplayName"] .. "使用了清理地图物品命令,将会在30秒后清理地图上的物品",nil,true,30)
+TimerFunctionOnce(30,function()
+EnumItemsInRect(Base.MAP_AREA,nil,function()
+local i=GetEnumItem()
+SetWidgetLife(i,1)
+RemoveItem(i)
+end)
+DisplayMessage("地图物品已清理",nil,true,30)
+end)
+end
+function InitDebug()
+InitDebug = nil
+if (Constant.Debug) then
+SetGameSpeed(MAP_SPEED_FASTEST)
+SetMapFlag(MAP_LOCK_SPEED, true)
+SetGameDifficulty(MAP_DIFFICULTY_INSANE)
+FogEnable(false)
+FogMaskEnable(false)
+local p = GetLocalPlayer()
+Debug = {
+Init = function()
+Debug.InitTips()
+Debug.InitCommand()
+end,
+InitCommand = function()
+local t = CreateTrigger()
+TriggerRegisterPlayerChatEvent(t, p, "", false)
+TriggerAddAction(t, function()
+local Commands=StringSplit(GetEventPlayerChatString()," ")
+local Command =Commands[1]
+if (Command == "dc") then
+print([[Debug命令列表
+[获取所有Debug命令]
+dc
+[提升选中英雄等级]
+uhl 等级
+[杀死选中单位]
+k
+[设置选中单位最大魔法值]
+smm 最大魔法值
+[创建指定个数随机怪物]
+cm 数量
+]])
+elseif(Command=="uhl")then
+local u=Constant.PlayerData[p]["SelectedUnit"]
+for i = 1, Commands[2] do
+SetHeroLevel(u,GetHeroLevel(u)+1,true)
+end
+elseif(Command=="k")then
+local u=Constant.PlayerData[p]["SelectedUnit"]
+KillUnit(u)
+elseif(Command=="smm")then
+local u=Constant.PlayerData[p]["SelectedUnit"]
+BlzSetUnitMaxMana(u, Commands[2])
+elseif(Command=="cm")then
+local x,y=GetCameraTargetPositionX(),GetCameraTargetPositionY()
+local Max=#Constant.UnitType.GeneralMonster
+for i = 1, Commands[2] do
+CreateUnitAtCoordinate(Base.NEUTRAL_AGGRESSIVE,Constant.UnitType.GeneralMonster[GetRandomInt(1,Max)],x,y)
+end
+end
+end)
+end,
+InitTips = function()
+DisplayMessage("当前处于Debug模式,你可以输入dc来获取所有的Debug命令",nil,true)
+end
+}
+Debug.Init()
+end
+end
+function InitEvent()
+InitEvent = nil
+InitDamageEvent()
+InitDieEvent()
+InitEnterMapEvent()
+InitLearnSkillEvent()
+InitSpellEvent()
+InitChatEvent()
+InitAttackEvent()
+InitLevelUpEvent()
+InitGetItemEvent()
+InitOwnerChangeEvent()
+InitSelectUnitEvent()
+end
+function InitDamageEvent()
+InitDamageEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_DAMAGED)
+TriggerAddAction(t, function()
+local DamageSource = GetEventDamageSource()
+local DamageTarget = BlzGetEventDamageTarget()
+if (IsAttackDamage()) then
+if (UnitHaveSkill(DamageSource, Constant.Skill.ShadowAttack)) then
+Skill_Effect_ShadowAttack(DamageTarget)
+end
+end
+if (IsHero(DamageTarget) and GetUnitHP(DamageTarget) < (GetEventDamage() + 100) and InOrderedTable(GetTriggerPlayer(), Constant.Group.AiPlayers)) then
+HeroAi_Dying(DamageTarget)
+end
+if (IsStructure(DamageTarget) and GetUnitHPRate(DamageTarget) < 0.6 and not UnitHaveSkill(DamageTarget, Constant.Buff.AllStructureRepair)) then
+Skill_AllStructureRepair(DamageTarget)
+end
+end)
+end
+function InitDieEvent()
+InitDieEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_DEATH)
+TriggerAddAction(t, function()
+local Dead, Killer = GetDyingUnit(), GetKillingUnit()
+KillSummary(Killer, Dead)
+SourceReward(Killer, Dead)
+KillTip(Killer, Dead)
+if (IsHero(Dead)) then
+local p = GetTriggerPlayer()
+if (InOrderedTable(p, Constant.Group.AiPlayers)) then
+Ai_ReBornHero(p, Dead)
+end
+else
+if (GetUnitTypeId(Dead) == Constant.UnitType.GoldMine) then
+GoldMineRegenerate()
+elseif(GetOwningPlayer(Dead) == Base.NEUTRAL_AGGRESSIVE and InOrderedTable(Dead, Constant.Group.CenterMonster)) then
+MonsterDropItem(GetUnitX(Dead), GetUnitY(Dead), GetUnitLevel(Dead))
+end
+ClearUnitData(Dead)
+end
+end)
+end
+function InitEnterMapEvent()
+InitEnterMapEvent = nil
+local t = CreateTrigger()
+local TemporaryRegion = CreateRegion()
+RegionAddRect(TemporaryRegion, Base.MAP_AREA)
+TriggerRegisterEnterRegion(t, TemporaryRegion, nil)
+TriggerAddAction(t, function()
+local u = GetEnteringUnit()
+if (UnitHaveSkill(u, Constant.Skill.SilenceAura)) then
+Skill_Effect_SilenceAura(u)
+end
+if (IsHero(u)) then
+local p = GetOwningPlayer(u)
+if (InOrderedTable(p, Constant.Group.AiPlayers)) then
+Constant.PlayerData[p]["HeroNumber"]=Constant.PlayerData[p]["HeroNumber"]+1
+RegisterHeroAi(u)
+end
+end
+end)
+end
+function InitLearnSkillEvent()
+InitLearnSkillEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_HERO_SKILL)
+TriggerAddAction(t, function()
+local Skill = GetLearnedSkill()
+local Hero=GetLearningUnit()
+if (Skill == Constant.Skill.AttributeMod) then
+Skill_Effect_AttributeMod(Hero)
+end
+if(GetUnitAbilityLevel(Hero,Skill)==1 and InOrderedTable(GetTriggerPlayer(),Constant.Group.AiPlayers))then
+InitSkill(Hero,Skill)
+end
+end)
+end
+function InitSpellEvent()
+InitSpellEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_SPELL_EFFECT)
+TriggerAddAction(t, function()
+local Skill = GetSpellAbilityId()
+if (Skill == Constant.Skill.Repair) then
+Skill_Effect_Repair(GetSpellAbilityUnit())
+elseif (Skill == Constant.Skill.AllStructureRepair) then
+Skill_Effect_AllStructureRepair(GetSpellAbilityUnit())
+elseif (Skill == Constant.Skill.Wall) then
+Skill_Effect_Wall(GetSpellAbilityUnit())
+end
+end)
+end
+function InitChatEvent()
+InitChatEvent = nil
+local t = CreateTrigger()
+for i = 1, #Constant.Group.UserPlayers do
+TriggerRegisterPlayerChatEvent(t, Constant.Group.UserPlayers[i], "", false)
+end
+TriggerAddAction(t, function()
+local p=GetTriggerPlayer()
+if(InOrderedTable(p,Constant.Group.UserPlayers))then
+CommandHandle(p, GetEventPlayerChatString())
+end
+end)
+end
+function InitAttackEvent()
+InitAttackEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_ATTACKED)
+TriggerAddAction(t, function()
+local u = GetTriggerUnit()
+local p = GetTriggerPlayer()
+if (not IsStructure(u) and InOrderedTable(p, Constant.Group.AiPlayers) and  not BlzIsUnitInvulnerable(u)) then
+local hp = GetUnitHP(u)-Constant.Value.KillDyingDamageFix
+if (hp < 100 or hp < GetUnitLevel(GetAttacker()) * Constant.Value.KillDyingDamageRate) then
+Ai_KillDying(p, u, hp)
+end
+end
+end)
+end
+function InitLevelUpEvent()
+InitLevelUpEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_HERO_LEVEL)
+TriggerAddAction(t, function()
+local Hero = GetTriggerUnit()
+local p = GetTriggerPlayer()
+if (InOrderedTable(p, Constant.Group.AiPlayers)) then
+HeroAi_LearnSkill(Hero)
+end
+end)
+end
+function InitGetItemEvent()
+InitGetItemEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_PICKUP_ITEM)
+TriggerAddAction(t, function()
+local Item = GetManipulatedItem()
+local Number = GetItemCharges(Item)
+if (Number > 0) then
+local ItemType = GetItemTypeId(Item)
+for i = 0, 5 do
+local NowItem = UnitItemInSlot(GetManipulatingUnit(), i)
+if (GetItemTypeId(NowItem) == ItemType and NowItem ~= Item) then
+SetItemCharges(Item, GetItemCharges(NowItem) + Number)
+RemoveItem(NowItem)
+break
+end
+end
+if (ItemType == Constant.ItemType.Base or ItemType == Constant.ItemType.MostBase and InOrderedTable(GetTriggerPlayer(), Constant.Group.AiPlayers)) then
+HeroAi_UseBaseItem(GetTriggerUnit())
+end
+else
+end
+end)
+end
+function InitOwnerChangeEvent()
+InitOwnerChangeEvent=nil
+local t=CreateTrigger()
+RegisterAnyUnitEvent(t,EVENT_PLAYER_UNIT_CHANGE_OWNER)
+TriggerAddAction(t,function ()
+if(GetTriggerPlayer()==Base.NEUTRAL_AGGRESSIVE)then
+OrderTableRemoveItem(Constant.Group.CenterMonster,GetTriggerUnit())
+end
+end)
+end
+function InitSelectUnitEvent()
+InitSelectUnitEvent = nil
+local t = CreateTrigger()
+RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_SELECTED)
+TriggerAddAction(t, function()
+Constant.PlayerData[GetTriggerPlayer()]["SelectedUnit"] = GetTriggerUnit()
+end)
+end
+function InitBaseUnit()
+InitBaseUnit = nil
+for i = 1, #Constant.Coordinate.AmmoDump do
+local Coordinate = Constant.Coordinate.AmmoDump[i]
+table.insert(Constant.Group.AmmoDumps, CreateUnitAtCoordinate(Base.NEUTRAL_PASSIVE, Constant.UnitType.AmmoDump, Coordinate[1], Coordinate[2]))
+end
+for i = 1, #Constant.Coordinate.Tavern do
+local Coordinate = Constant.Coordinate.Tavern[i]
+table.insert(Constant.Group.Taverns, CreateUnitAtCoordinate(Base.NEUTRAL_PASSIVE, Constant.UnitType.Tavern, Coordinate[1], Coordinate[2]))
+end
+for i = 1, Constant.Number.Seal do
+CreateUnitAtRandomPosition(Base.NEUTRAL_PASSIVE, Constant.UnitType.Seal)
+end
+Constant.Unit.UnknownOrganism = CreateUnitAtRandomPosition(Base.NEUTRAL_AGGRESSIVE, Constant.UnitType.UnknownOrganism)
+Constant.Unit.Spell = CreateUnitAtCoordinate(Base.NEUTRAL_PASSIVE, Constant.UnitType.Spell, 0, 0)
+Constant.Unit.BlackStoreBusiness = CreateUnitAtRandomPosition(Base.NEUTRAL_PASSIVE, Constant.UnitType.BlackStoreBusiness)
+for i = 1, Constant.Number.BaseMonster do
+CreateUnitAtRandomPosition(Base.NEUTRAL_AGGRESSIVE, Constant.UnitType.GeneralMonster[GetRandomInt(1, #Constant.UnitType.GeneralMonster)])
+end
+for i = 1, #Constant.Group.Players do
+local p = Constant.Group.Players[i]
+local Race = GetPlayerRace(p)
+local StartX = GetStartLocationX(GetPlayerStartLocation(p))
+local StartY = GetStartLocationY(GetPlayerStartLocation(p))
+local GoldMineType = Constant.UnitType.GoldMine
+local BaseType = Constant.UnitType.Base[Race][1]
+local MinerType = Constant.UnitType.Worker[Race]
+if (Race == RACE_UNDEAD) then
+GoldMineType = StringToInteger("ugol")
+elseif (Race == RACE_NIGHTELF) then
+GoldMineType = StringToInteger("egol")
+end
+UnitAddAbility(CreateUnitAtCoordinate(p, BaseType, StartX, StartY), Constant.Skill.ChildAura)
+if (GoldMineType == Constant.UnitType.GoldMine) then
+CreateUnitAtCoordinate(Base.NEUTRAL_PASSIVE, GoldMineType, StartX, StartY)
+else
+SetResourceAmount(CreateUnitAtCoordinate(p, GoldMineType, StartX, StartY), Constant.Value.GeneralGoldMineGold)
+end
+for j = 1, Constant.Number.BaseGoldMiner do
+CreateUnitAtCoordinate(p, MinerType, StartX, StartY)
+end
+end
+end
+function InitSuperGoldMine()
+InitSuperGoldMine = nil
+TimerFunctionOnce(Constant.Time.SuperGoldMine, function()
+for i = 1, Constant.Number.SuperGoldMine do
+table.insert(Constant.Group.GoldMines,CreateUnitAtRandomPosition(Base.NEUTRAL_PASSIVE, Constant.UnitType.SuperGoldMine))
+end
+Constant.Time.SuperGoldMine=nil
+Constant.Number.SuperGoldMine=nil
+Constant.UnitType.SuperGoldMine=nil
+end)
+end
+function InitTips()
+InitTips = nil
+local Tips = CreateQuest()
+QuestSetTitle(Tips, "命令")
+QuestSetIconPath(Tips, "ReplaceableTextures/CommandButtons/BTNBloodElfSupplyWagon.blp")
+QuestSetDescription(Tips, [[常用命令(在命令前要加-)
+ms 查看移速
+ng/nw 玩家id 资源量 向电脑玩家请求黄金/木材
+gg/gw 玩家id 资源量 给予AI队友黄金/木材
+giun 玩家id 转让单位给玩家
+neun 向AI请求转让单位
+cl 命令列表]])
+Tips = CreateQuest()
+QuestSetTitle(Tips, "更新日志")
+QuestSetIconPath(Tips, "ReplaceableTextures/WorldEditUI/StartingLocation.blp")
+QuestSetDescription(Tips, [[20200309
+[更改]
+1.[重要]使用lua重新制作,更加丰富的地形装饰物和更多的树木
+2.恐惧魔王终极技能更改为混乱之雨
+3.修改了ai的部分技能使用机制
+4.[重要]版本需求更改为1.31+
+5.修补匠的机器人进军更改为粉碎
+6.部分单位改名
+7.修补匠的修理的附加附加现在会随技能等级提升,并拥有消退时间效果
+8.增加了金矿数量
+9.中立英雄移除炼金术士和侍僧
+10.现在精英怪物所有负面效果技能无视魔免
+11.增强恐怖阴影
+12.所有技能快捷键恢复为默认值
+13.科技最大等级更改为9
+14.金矿基础含量更改为10000
+15.大幅调整ai学习技能的顺序
+16.其它的一些更改
+[新增]
+1.新增中立生物海豹
+2.增加了新的怪物种类
+3.新增击杀地图中心怪物掉落物品机制
+4.添加了天气效果
+5.再生的金矿含量随机化
+6.为更多伤害和治疗型的技能添加了ai施放
+7.其它的一些新增
+[修正]
+1.修正堕落法师沉默光环无效的问题
+2.修正了部分技能提示不正确的问题
+3.其它的一些修正]])
+Tips = CreateQuest()
+QuestSetTitle(Tips, "已知问题")
+QuestSetIconPath(Tips, "ReplaceableTextures/CommandButtons/BTNAuraOfDarkness.blp")
+QuestSetDescription(Tips, [[偶尔会周期性地卡顿,原因不明,不过据测试如果全选不死族似乎没有卡顿
+游戏一小时后有较大几率崩溃,原因不明,可以用存档读档临时解决]])
+Tips = CreateQuest()
+QuestSetTitle(Tips, "开源声明")
+QuestSetIconPath(Tips, "ReplaceableTextures/CommandButtons/BTNLament.blp")
+QuestSetDescription(Tips, "我所有的地图都是开源的,你可以随意修改和发布,但有必要加上原作者gcud")
+QuestSetRequired(Tips, false)
+Tips = CreateQuest()
+QuestSetTitle(Tips, "联系我")
+QuestSetIconPath(Tips, "ReplaceableTextures/WorldEditUI/BlizzardLogo.blp")
+QuestSetDescription(Tips, "我所有地图,资料和工具都在我的微云分享里,地址是https://share.weiyun.com/5EefuQM,如果你有什么意见,建议或是想问我的,你可以加我的微信号gcudzy,你需要注明你的来意,或者你也可以发送邮件到gcudfun@163.com")
+QuestSetRequired(Tips, false)
+Tips = CreateQuest()
+QuestSetTitle(Tips, "杂谈")
+QuestSetIconPath(Tips, "ReplaceableTextures/CommandButtons/BTNBoneChimes.blp")
+QuestSetDescription(Tips, [[这个版本花了我太多的时间,导致我没时间去做其它图和其它事,到这个时候我想实在是要结束了,哪怕它还存在闪退和无提示崩溃这种严重的问题
+为了保证地图新版本没有污染,所有数据没有采用直接的复制粘贴,而是一点点还原的,物编这块尤其是技能这块做起来最麻烦,其次是单位,花了很多时间,这个版本的平衡性有较大调整,很多技能都加大了魔耗,大致上按照1.25倍率做的,地图本来更大一些,但考虑到性能和比较空的原因又变成原来的大小
+想起用lua的一个好处是只要把数据结构规划好,写ai的技能升级简直太简单,之前因为ydwe的自带ai学习技能存在循环溢出的问题一直想把ai学习技能部分自己重写,但一直苦于数据的保存和读取,字符串截取啊,哈希表嵌套啊简直头大
+翻技能id时看到一个有趣的东西,本是月之女祭司的技能灼热之箭id为AHfa,而从其它的技能命名来看id都是以[A 种族首字母 技能名称]这种方式命名的,也就是说精灵的技能都是AE开头,而这个技能是AH开头,所以这个可能原来是人族技能不知什么原因改成了精灵的
+另外作图的主要部分期间我感冒了,导致效率差了很多]])
+QuestSetRequired(Tips, false)
+DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 30, [[|cFF666666诺森德之殇1-混乱大陆
+]] .. Constant.Version .. "|r")
+DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 30, "|cFF666666gcud|r")
+TimerFunctionOnce(30, function()
+DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 30, [[|cff00ff00我所有的地图都是开源的,你可以随意修改和发布,但有必要加上原作者gcud
+你可以在https://share.weiyun.com/5EefuQM上找到我所有的地图,资料和工具
+如果你有什么意见,建议或是想问我的,你可以加我的微信号gcudzy,你需要注明你的来意,你也可以发送邮件到gcudfun@163.com|r]])
+end)
+DisplayMessage("注意:当前版本存在稳定性和性能问题!",nil,true,60)
+end
+function InitSetting()
+InitSetting = nil
+SetPlayerName(Base.NEUTRAL_PASSIVE, "诺森德访客")
+SetPlayerName(Base.NEUTRAL_AGGRESSIVE, "诺森德恶灵")
+Constant.PlayerData[Base.NEUTRAL_AGGRESSIVE] = { DisplayName = "|cffffffff诺森德恶灵|r" }
+BlzUnitDisableAbility(Constant.Unit.Spell, Constant.Skill.SilenceAuraAction, true, false)
+InitUnknownOrganism()
+end
+function InitPlayers()
+InitPlayers = nil
+for i = 1, Constant.Number.MaxPlayer do
+local p = Player(i - 1)
+if (GetPlayerSlotState(p) == PLAYER_SLOT_STATE_PLAYING) then
+SetPlayerTechMaxAllowed(p, StringToInteger("HERO"), Constant.Number.MaxHero)
+ModifyPlayerGold(p, Constant.Value.StartGold, true)
+ModifyPlayerLumber(p, Constant.Value.StartLumber, true)
+table.insert(Constant.Group.Players, p)
+Constant.PlayerData[p] = { PlayerLine = 0, DisplayName = "|cff" .. GetPlayerColorString(i) .. GetPlayerName(p) .. "|r", LoseUnit = 0, LoseHero = 0, LoseStructure = 0, KillAllianceUnit = 0, KillAllianceHero = 0, KillUnit = 0, KillHero = 0, DestroyStructure = 0}
+if (GetPlayerController(p) == MAP_CONTROL_COMPUTER) then
+Constant.PlayerData[p]["HeroNumber"]=0
+Constant.PlayerData[p]["Research"]=1
+Constant.PlayerData[p]["GoblinMinerTarget"]=nil
+Constant.PlayerData[p]["GoblinMinerReceiver"]=nil
+table.insert(Constant.Group.AiPlayers, p)
+SetPlayerName(p, GetAiPlayerName(i))
+Constant.PlayerData[p]["DisplayName"]="|cff" .. GetPlayerColorString(i) .. GetPlayerName(p) .. "|r"
+RegisterAi(p)
+else
+Constant.PlayerData[p]["SelectedUnit"]=nil
+table.insert(Constant.Group.UserPlayers, p)
+end
+end
+end
+local TemporaryPlayers = {}
+for i = 1, #Constant.Group.Players do
+table.insert(TemporaryPlayers, Constant.Group.Players[i])
+end
+while (#TemporaryPlayers > 0) do
+local Alliance = {}
+local FirstPlayer = TemporaryPlayers[1]
+table.remove(TemporaryPlayers, 1)
+table.insert(Alliance, FirstPlayer)
+local offset = 0
+for i = 1, #TemporaryPlayers do
+if (#TemporaryPlayers > 0) then
+local p = TemporaryPlayers[i - offset]
+if (IsPlayerAlly(p, FirstPlayer)) then
+table.remove(TemporaryPlayers, i - offset)
+table.insert(Alliance, p)
+offset = offset + 1
+end
+else
+break
+end
+end
+table.insert(Constant.Group.Alliance, Alliance)
+end
+end
+function InitGameBoard()
+InitGameBoard = nil
+local RowLength = 1
+Constant.GameBoard = CreateMultiboard()
+MultiboardSetRowCount(Constant.GameBoard, RowLength)
+MultiboardSetColumnCount(Constant.GameBoard, 11)
+MultiboardSetTitleText(Constant.GameBoard, "|cFF666666诺森德之殇1-混乱大陆|r")
+MultiboardSetItemsStyle(Constant.GameBoard, true, false)
+MultiboardSetItemsWidth(Constant.GameBoard, 0.05)
+MultiboardMinimize(Constant.GameBoard, true)
+SetGameBoardValue(0, 0, "同盟队伍")
+SetGameBoardValue(0, 1, "杀死英雄")
+SetGameBoardValue(0, 2, "英雄死亡")
+SetGameBoardValue(0, 3, "摧毁建筑")
+SetGameBoardValue(0, 4, "损失建筑")
+SetGameBoardValue(0, 5, "杀死单位")
+SetGameBoardValue(0, 6, "损失单位")
+SetGameBoardValue(0, 7, "反补英雄")
+SetGameBoardValue(0, 8, "反补单位")
+SetGameBoardValue(0, 9, "单位数量")
+SetGameBoardValue(0, 10, "游戏状态")
+MultiboardSetItemWidth(MultiboardGetItem(Constant.GameBoard, 0, 0), 0.1)
+MultiboardDisplay(Constant.GameBoard, true)
+local RowIndex = 0
+for i = 1, #Constant.Group.Alliance do
+RowIndex = RowLength
+RowLength = RowLength + 1
+MultiboardSetRowCount(Constant.GameBoard, RowLength)
+SetGameBoardValue(RowIndex, 0, "联盟" .. i)
+for j = 1, #Constant.Group.Alliance[i] do
+RowIndex = RowLength
+RowLength = RowLength + 1
+MultiboardSetRowCount(Constant.GameBoard, RowLength)
+local p = Constant.Group.Alliance[i][j]
+Constant.PlayerData[p]["PlayerLine"] = RowIndex
+local Item = MultiboardGetItem(Constant.GameBoard, RowIndex, 0)
+MultiboardSetItemWidth(Item, 0.1)
+MultiboardSetItemValue(Item, Constant.PlayerData[p]["DisplayName"] .. "(" .. GetPlayerId(p) .. ")")
+SetGameBoardValue(RowIndex, 10, "|cFF00FF00正在游戏|r")
+end
+end
+MultiboardSetRowCount(Constant.GameBoard, RowLength + 1)
+Constant.Value.ExtraInfoRowIndex = RowLength
+SetGameBoardValue(RowLength, 0, "游戏时间")
+SetGameBoardValue(RowLength, 2, "现实时间")
+MultiboardSetItemWidth(MultiboardGetItem(Constant.GameBoard, RowLength, 3), 0.15)
+SetGameBoardValue(RowLength, 9, "怪物数量")
+end
+function Init()
+Init = nil
+InitPlayers()
+InitAllTrigger()
+InitSuperGoldMine()
+InitTips()
+InitGameBoard()
+InitBaseUnit()
+InitMonster()
+InitSetting()
+InitDebug()
+ClearInvalidVariable()
+end
+function Start()
+Start = nil
+local t = CreateTrigger()
+TriggerRegisterTimerEvent(t, 0, false)
+TriggerAddAction(t, function()
+DestroyTrigger(t)
+InitBaseConstant()
+InitConstant()
+Init()
+end)
+end
+Start()
+function InitConstant()
+InitConstant = nil
+Constant = {
+Debug = true,
+Version = "20200309",
+GameOver = false,
+Coordinate = {
+AmmoDump = { { -15700, 7300 }, { -20000, 10200 }, { 5000, 20000 }, { 19200, -21000 }, },
+Tavern = { { -7500, -21000 }, { 4600, 20000 }, { -12300, 8600 }, { 18000, -4500 }, },
+PowerMonster = { -15000, -1000 }
+},
+Time = {
+SuperGoldMine = 600,
+PowerMonster = 1800,
+RandomMonster = 2700,
+RandomMonsterCreateInterval = 600,
+CenterMonsterCreateInterval = 300,
+ShowPlayerUnitsCoordinateInterval = 270,
+GoldMineRegenerate = 600,
+UnknownOrganismCommandInterVal = 10,
+DestructableClearInterval = 1800,
+AiBuyWorkerInterval = 60,
+AiGoblinMinerActionInterval = 5,
+AiRebornHeroInterval = 10,
+AiBuyHeroInterval = 60,
+HeroAiUseItemInterval = 3,
+AiBuildInterval = 60
+},
+Number = {
+AllMonster = 300,
+BaseMonster = 200,
+CenterMonster = 200,
+MaxHero = 4,
+Seal = 150,
+SuperGoldMine = 4,
+MaxPlayer = 12,
+BaseGoldMiner = 5,
+ShowPlayerUnitsCoordinateMin = 5,
+AiBuyGoblinMiner = 5,
+AiBuyIronGoblin = 1,
+AiShop = 5
+},
+UnitType = {
+GoldMine = StringToInteger("ngol"),
+AmmoDump = StringToInteger("ngad"),
+GoblinShop = StringToInteger("ngme"),
+Tavern = StringToInteger("ntav"),
+Spell = StringToInteger("e000"),
+BlackStoreBusiness = StringToInteger("npng"),
+UnknownOrganism = StringToInteger("ndwm"),
+Seal = StringToInteger("nsea"),
+GeneralMonster = {
+StringToInteger("nnwq"), StringToInteger("nnwl"), StringToInteger("nnwr"),
+StringToInteger("nmrr"), StringToInteger("nmrm"), StringToInteger("nmrl"),
+StringToInteger("nitr"), StringToInteger("nits"), StringToInteger("nitt"),
+StringToInteger("nrvi"), StringToInteger("ngh1"), StringToInteger("ngh2"),
+StringToInteger("nfrp"),
+StringToInteger("nwna"), StringToInteger("nwen"), StringToInteger("nwns"), StringToInteger("nwnr"),
+StringToInteger("nmam"), StringToInteger("nmit"), StringToInteger("nmdr"),
+StringToInteger("nwwf"), StringToInteger("nwwg"), StringToInteger("nwwd"),
+StringToInteger("nfor"), StringToInteger("nfot"), StringToInteger("nfod"),
+StringToInteger("nmgw"), StringToInteger("nmgr"), StringToInteger("nmgd"),
+},
+CenterMonster = {
+StringToInteger("ngrd"), StringToInteger("nstw"), StringToInteger("nsth"),
+StringToInteger("nfra"), StringToInteger("noga"), StringToInteger("ncnk"),
+StringToInteger("nbzd"), StringToInteger("nowk"), StringToInteger("nndr"),
+StringToInteger("nerw"), StringToInteger("ninm"), StringToInteger("nina"),
+StringToInteger("ndqp"), StringToInteger("nvde"), StringToInteger("ninf"),
+StringToInteger("nbal"), StringToInteger("nggr"), StringToInteger("nwzd"),
+StringToInteger("nelb"), StringToInteger("nsgg"), StringToInteger("nrvd"),
+StringToInteger("nsll"), StringToInteger("nbdo"), StringToInteger("nadr"),
+StringToInteger("nfot"), StringToInteger("nfod"), StringToInteger("nmdr"),
+StringToInteger("nfpe"), StringToInteger("nfpu"), StringToInteger("nbwm"),
+StringToInteger("nrwm"), StringToInteger("nrvi"), StringToInteger("nwna"),
+StringToInteger("njgb"), StringToInteger("nsgb"), StringToInteger("nahy"),
+StringToInteger("ndrv"), StringToInteger("nlrv"), StringToInteger("nsoc"),
+StringToInteger("nsrw"), StringToInteger("ntrd"), StringToInteger("nsqa")
+},
+SuperGoldMine = StringToInteger("n003"),
+GoblinMiner = StringToInteger("ncpn"),
+Wall = StringToInteger("ngwr"),
+IronGoblin = StringToInteger("ngir"),
+LumberTruck = StringToInteger("hbew"),
+FoodStructure = { },
+Worker = {},
+Warehouse = StringToInteger("npgr"),
+Shop = {},
+Altar = { StringToInteger("halt"), StringToInteger("oalt"), StringToInteger("uaod"), StringToInteger("eate"), },
+HeroList = {
+Paladin = StringToInteger("Hpal"),
+ArchMage = StringToInteger("Hamg"),
+MountainKing = StringToInteger("Hmkg"),
+BloodElfPrince = StringToInteger("Hblm"),
+Blademaster = StringToInteger("Obla"),
+Farseer = StringToInteger("Ofar"),
+TaurenChieftain = StringToInteger("Otch"),
+ShadowHunter = StringToInteger("Oshd"),
+DeathKnight = StringToInteger("Udea"),
+Lich = StringToInteger("Ulic"),
+DreadLord = StringToInteger("Udre"),
+CryptLord = StringToInteger("Ucrl"),
+KeeperOfTheGrove = StringToInteger("Ekee"),
+PriestessOfTheMoon = StringToInteger("Emoo"),
+DemonHunter = StringToInteger("Edem"),
+Warden = StringToInteger("Ewar"),
+NagaSeaWitch = StringToInteger("Nngs"),
+Tinker = StringToInteger("Ntin"),
+PitLord = StringToInteger("Nplh"),
+AvatarOfFlame = StringToInteger("Nfir"),
+PandarenBrewmaster = StringToInteger("Npbm"),
+BeastMaster = StringToInteger("Nbst"),
+BansheeRanger = StringToInteger("Nbrn")
+},
+ExtraHero = { },
+Base = {}
+},
+Unit = { UnknownOrganism = nil, Spell = nil, BlackStoreBusiness = nil },
+Group = {
+CenterMonster = {},
+Players = {},
+AiPlayers = {},
+UserPlayers = {},
+Alliance = {},
+AmmoDumps = {},
+Taverns = {},
+GoldMines = {},
+AllStructureRepairHero = {}
+},
+Skill = {
+ShadowAttack = StringToInteger("A010"),
+SilenceAura = StringToInteger("A00C"),
+SilenceAuraAction = StringToInteger("A00B"),
+ChildAura = StringToInteger("A01C"),
+AllStructureRepairEffect = StringToInteger("A01D"),
+AttributeMod = StringToInteger("Aamk"),
+ReceiveGoldAndLumber = StringToInteger("Argl"),
+BuyItem = StringToInteger("Apit"),
+RepairArmorCheck = StringToInteger("ARac"),
+HolyBolt = StringToInteger("AHhb"),
+Banish = StringToInteger("AHbn"),
+StormBolt = StringToInteger("AHtb"),
+HealingWave = StringToInteger("AOhw"),
+Hex = StringToInteger("AOhx"),
+WarStomp = StringToInteger("AOws"),
+ChainLightning = StringToInteger("AOcl"),
+DeathPact = StringToInteger("AUdp"),
+DeathCoil = StringToInteger("AUdc"),
+Impale = StringToInteger("AUim"),
+CarrionSwarm = StringToInteger("AUcs"),
+FrostNova = StringToInteger("AUfn"),
+DarkRitual = StringToInteger("AUdr"),
+FanOfKnives = StringToInteger("AEfk"),
+ShadowStrike = StringToInteger("AEsh"),
+ManaBurn = StringToInteger("AEmb"),
+EntanglingRoots = StringToInteger("AEer"),
+ForkedLightning = StringToInteger("ANfl"),
+HowlOfTerror = StringToInteger("ANht"),
+Doom = StringToInteger("ANdo"),
+Silence = StringToInteger("ANsi"),
+BreathOfFire = StringToInteger("ANbf"),
+SoulBurn = StringToInteger("ANso"),
+LifeDrain = StringToInteger("ANdr"),
+StrongDrink = StringToInteger("ANdh"),
+AllStructureRepair = StringToInteger("A019"),
+Wall = StringToInteger("A01A"),
+Repair = StringToInteger("A01B"),
+},
+Value = {
+StartGold = 1000,
+StartLumber = 500,
+GeneralGoldMineGold = 10000,
+ExtraInfoRowIndex = 0,
+AiPlayerGoldReward = 17,
+AiPlayerLumberReward = 9,
+KillUnitRewardGold = 18,
+KillUnitRewardLumber = 15,
+KillHeroRewardGold = 75,
+KillHeroRewardLumber = 30,
+AiKillReward = 2,
+UnknownOrganismForceAttackRange = 2000,
+AiSourceDealWithMin = 1000,
+AiSourceDealWithMax = 500000,
+AiSourceDealWithRate = 0.7,
+AiResearchMinGold = 3000,
+AiResearchMinLumber = 2000,
+ResearchMaxLevel = 9,
+BuildTryMax = 10,
+GoldMineRandomRate = 0.5,
+KillDyingDamageRate = 8,
+DropItemLevelRate = 0.85,
+KillDyingDamageFix = 50
+},
+GameBoard = nil,
+PlayerData = {},
+Command = {
+Move = OrderId("move"),
+Harvest = OrderId("harvest"),
+ResumeHarvesting = OrderId("resumeharvesting"),
+Smart = OrderId("smart"),
+Attack = OrderId("attack"),
+Repair = OrderId("repair"),
+AiMove=OrderId("AImove")
+},
+GameTime = 0,
+AiPlayerName = { "罪恶佣兵团", "神圣骑士团", "光明议会", "至高联盟", "毁灭者", "死亡丧钟", "恐怖深渊", "圣龙团", "拉卡萨集团", "无尽的战争", "凋零的希望", "尼古拉斯-赵四" },
+PlayerColor = { "ff0000", "0000ff", "00ffff", "800080", "ffff00", "ffa500", "00ff00", "ffc0cb", "808080", "87cefa", "006400", "a52a2a" },
+PowerMonster = {
+{ Id = StringToInteger("nfgl"), Number = 2 },
+{ Id = StringToInteger("odkt"), Number = 1 },
+{ Id = StringToInteger("nfov"), Number = 2 },
+{ Id = StringToInteger("nhhr"), Number = 2 },
+{ Id = StringToInteger("ndqs"), Number = 1 },
+},
+Research = {},
+ItemType = {
+HugeHpPotion = StringToInteger("pghe"),
+HugeManaPotion = StringToInteger("pgma"),
+HpPotion = StringToInteger("phea"),
+ManaPotion = StringToInteger("pman"),
+HealingScroll = StringToInteger("shea"),
+BackBase = StringToInteger("stwp"),
+ReBorn = StringToInteger("ankh"),
+ProtectPotion = StringToInteger("pdiv"),
+MostBase = StringToInteger("tcas"),
+Base = StringToInteger("tgrh"),
+DefendMagic = StringToInteger("spsh"),
+HidePotion = StringToInteger("pinv"),
+FrameBall = StringToInteger("ofir"),
+SlowBall = StringToInteger("oslo"),
+WeakenBall = StringToInteger("ocor"),
+PoisonousBall = StringToInteger("oven"),
+},
+LearnSKill = {},
+Buff = { Banish = StringToInteger("BHbn"), Hex = StringToInteger("BOhx"), Impale = StringToInteger("BUim"), Doom = StringToInteger("BNdo"), StrongDrink = StringToInteger("BNdh"), AllStructureRepair = StringToInteger("A01D"), Stun = StringToInteger("BPSE"), SoulBurn = StringToInteger("BMso"), Silence = StringToInteger("BNsi"), HowlOfTerror = StringToInteger("BNht"),ShadowStrike=StringToInteger("BEsh") },
+}
+BindExtraConstant()
+end
+function BindExtraConstant()
+BindExtraConstant = nil
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.NagaSeaWitch)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.Tinker)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.PitLord)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.AvatarOfFlame)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.PandarenBrewmaster)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.BeastMaster)
+table.insert(Constant.UnitType.ExtraHero, Constant.UnitType.HeroList.BansheeRanger)
+Constant.UnitType.FoodStructure[RACE_HUMAN] = StringToInteger("hhou")
+Constant.UnitType.FoodStructure[RACE_ORC] = StringToInteger("otrb")
+Constant.UnitType.FoodStructure[RACE_UNDEAD] = StringToInteger("uzig")
+Constant.UnitType.FoodStructure[RACE_NIGHTELF] = StringToInteger("emow")
+Constant.UnitType.Shop[RACE_HUMAN] = StringToInteger("hvlt")
+Constant.UnitType.Shop[RACE_ORC] = StringToInteger("ovln")
+Constant.UnitType.Shop[RACE_UNDEAD] = StringToInteger("utom")
+Constant.UnitType.Shop[RACE_NIGHTELF] = StringToInteger("eden")
+Constant.UnitType.Worker[RACE_HUMAN] = StringToInteger("hpea")
+Constant.UnitType.Worker[RACE_ORC] = StringToInteger("opeo")
+Constant.UnitType.Worker[RACE_UNDEAD] = StringToInteger("uaco")
+Constant.UnitType.Worker[RACE_NIGHTELF] = StringToInteger("ewsp")
+Constant.Research[RACE_HUMAN] = {
+{ { Item = StringToInteger("Rhme"), Structure = StringToInteger("hbla") },
+{ Item = StringToInteger("Rhla"), Structure = StringToInteger("hbla") },
+{ Item = StringToInteger("Rhan"), Structure = StringToInteger("hbar") } },
+{ { Item = StringToInteger("Rhhb"), Structure = StringToInteger("hgra") } },
+{ { Item = StringToInteger("Rhri"), Structure = StringToInteger("hbar") },
+{ Item = StringToInteger("Rhlh"), Structure = StringToInteger("hlum") },
+{ Item = StringToInteger("Rhac"), Structure = StringToInteger("hlum") },
+{ Item = StringToInteger("Rhar"), Structure = StringToInteger("hbla") },
+{ Item = StringToInteger("Rhra"), Structure = StringToInteger("hbla") },
+{ Item = StringToInteger("Rhpt"), Structure = StringToInteger("hars") },
+{ Item = StringToInteger("Rhst"), Structure = StringToInteger("hars") } } }
+Constant.Research[RACE_ORC] = {
+{ { Item = StringToInteger("Rwdm"), Structure = StringToInteger("obea") },
+{ Item = StringToInteger("Rora"), Structure = StringToInteger("ofor") } },
+{ { Item = StringToInteger("Rosp"), Structure = StringToInteger("ofor") },
+{ Item = StringToInteger("Roar"), Structure = StringToInteger("ofor") } },
+{ { Item = StringToInteger("Robs"), Structure = StringToInteger("obar") },
+{ Item = StringToInteger("Rotr"), Structure = StringToInteger("obar") },
+{ Item = StringToInteger("Rowd"), Structure = StringToInteger("osld") },
+{ Item = StringToInteger("Rowt"), Structure = StringToInteger("osld") },
+{ Item = StringToInteger("Rost"), Structure = StringToInteger("osld") },
+{ Item = StringToInteger("Rome"), Structure = StringToInteger("ofor") } } }
+Constant.Research[RACE_UNDEAD] = {
+{ { Item = StringToInteger("Rura"), Structure = StringToInteger("ugrv") },
+{ Item = StringToInteger("Rucr"), Structure = StringToInteger("ugrv") } },
+{ { Item = StringToInteger("Rune"), Structure = StringToInteger("utod") },
+{ Item = StringToInteger("Rusl"), Structure = StringToInteger("utod") },
+{ Item = StringToInteger("Rusm"), Structure = StringToInteger("utod") } },
+{ { Item = StringToInteger("Rugf"), Structure = StringToInteger("usep") },
+{ Item = StringToInteger("Rume"), Structure = StringToInteger("ugrv") },
+{ Item = StringToInteger("Ruar"), Structure = StringToInteger("ugrv") },
+{ Item = StringToInteger("Ruba"), Structure = StringToInteger("utod") } } }
+Constant.Research[RACE_NIGHTELF] = {
+{ { Item = StringToInteger("Remk"), Structure = StringToInteger("eaom") },
+{ Item = StringToInteger("Reib"), Structure = StringToInteger("eaom") },
+{ Item = StringToInteger("Resm"), Structure = StringToInteger("edob") },
+{ Item = StringToInteger("Rema"), Structure = StringToInteger("edob") },
+{ Item = StringToInteger("Rews"), Structure = StringToInteger("edob") } },
+{ { Item = StringToInteger("Rerh"), Structure = StringToInteger("edob") },
+{ Item = StringToInteger("Renb"), Structure = { StringToInteger("etol"), StringToInteger("etoa"), StringToInteger("etoe") } } },
+{ { Item = StringToInteger("Remg"), Structure = StringToInteger("eaom") },
+{ Item = StringToInteger("Repb"), Structure = StringToInteger("eaom") },
+{ Item = StringToInteger("Redc"), Structure = StringToInteger("eaoe") },
+{ Item = StringToInteger("Redt"), Structure = StringToInteger("eaow") },
+{ Item = StringToInteger("Resw"), Structure = StringToInteger("edob") } } }
+Constant.UnitType.Base[RACE_HUMAN] = { StringToInteger("htow"), StringToInteger("hkee"), StringToInteger("hcas") }
+Constant.UnitType.Base[RACE_ORC] = { StringToInteger("ogre"), StringToInteger("ostr"), StringToInteger("ofrt") }
+Constant.UnitType.Base[RACE_UNDEAD] = { StringToInteger("unpl"), StringToInteger("unp1"), StringToInteger("unp2") }
+Constant.UnitType.Base[RACE_NIGHTELF] = { StringToInteger("etol"), StringToInteger("etoa"), StringToInteger("etoe") }
+Constant.LearnSKill[Constant.UnitType.HeroList.Paladin] = { StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("AHhb"), StringToInteger("AHad"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHds"), StringToInteger("Aamk"), StringToInteger("AHre"), StringToInteger("Aamk"), StringToInteger("AHre"), StringToInteger("Aamk"), StringToInteger("AHre"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.ArchMage] = { StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("AHab"), StringToInteger("AHwe"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHbz"), StringToInteger("Aamk"), StringToInteger("AHmt"), StringToInteger("Aamk"), StringToInteger("AHmt"), StringToInteger("Aamk"), StringToInteger("AHmt"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.MountainKing] = { StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHtb"), StringToInteger("AHav"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHav"), StringToInteger("AHtb"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("AHav"), StringToInteger("AHtb"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHtc"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), StringToInteger("Aamk"), StringToInteger("AHbh"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.BloodElfPrince] = { StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHpx"), StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHpx"), StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHbn"), StringToInteger("AHfs"), StringToInteger("AHpx"), StringToInteger("AHbn"), StringToInteger("AHbn"), StringToInteger("AHbn"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("AHdr"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.Blademaster] = { StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOcr"), StringToInteger("AOww"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOww"), StringToInteger("AOcr"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("AOww"), StringToInteger("AOcr"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOwk"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), StringToInteger("Aamk"), StringToInteger("AOmi"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.Farseer] = { StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("AOsf"), StringToInteger("AOcl"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AOeq"), StringToInteger("Aamk"), StringToInteger("AOeq"), StringToInteger("Aamk"), StringToInteger("AOeq"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), StringToInteger("Aamk"), StringToInteger("AOfs"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.TaurenChieftain] = { StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOae"), StringToInteger("AOre"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOre"), StringToInteger("AOae"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOre"), StringToInteger("AOae"), StringToInteger("AOws"), StringToInteger("AOws"), StringToInteger("AOws"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), StringToInteger("Aamk"), StringToInteger("AOsh"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.ShadowHunter] = { StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("AOhw"), StringToInteger("AOhx"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOsw"), StringToInteger("Aamk"), StringToInteger("AOvd"), StringToInteger("Aamk"), StringToInteger("AOvd"), StringToInteger("Aamk"), StringToInteger("AOvd"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.DeathKnight] = { StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("AUdc"), StringToInteger("AUau"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUdp"), StringToInteger("Aamk"), StringToInteger("AUan"), StringToInteger("Aamk"), StringToInteger("AUan"), StringToInteger("Aamk"), StringToInteger("AUan"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.Lich] = { StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUfn"), StringToInteger("AUdd"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUdd"), StringToInteger("AUfn"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUdd"), StringToInteger("AUfn"), StringToInteger("AUdr"), StringToInteger("AUdr"), StringToInteger("AUdr"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), StringToInteger("Aamk"), StringToInteger("AUfu"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.DreadLord] = { StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("ANr3"), StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("ANr3"), StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("Aamk"), StringToInteger("AUav"), StringToInteger("ANr3"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUsl"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), StringToInteger("Aamk"), StringToInteger("AUcs"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.CryptLord] = { StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUts"), StringToInteger("AUls"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUls"), StringToInteger("AUts"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("AUls"), StringToInteger("AUts"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUcb"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), StringToInteger("Aamk"), StringToInteger("AUim"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.KeeperOfTheGrove] = { StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEah"), StringToInteger("AEer"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEfn"), StringToInteger("AEtq"), StringToInteger("AEtq"), StringToInteger("AEtq"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.PriestessOfTheMoon] = { StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEar"), StringToInteger("AEsf"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEsf"), StringToInteger("AEar"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("AEsf"), StringToInteger("AEar"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AHfa"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), StringToInteger("Aamk"), StringToInteger("AEst"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.DemonHunter] = { StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEev"), StringToInteger("AEme"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEme"), StringToInteger("AEev"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("AEme"), StringToInteger("AEev"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEmb"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), StringToInteger("Aamk"), StringToInteger("AEim"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.Warden] = { StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEbl"), StringToInteger("AEsv"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEsv"), StringToInteger("AEbl"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("AEsv"), StringToInteger("AEbl"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEfk"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), StringToInteger("Aamk"), StringToInteger("AEsh"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.NagaSeaWitch] = { StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("ANfl"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANfa"), StringToInteger("Aamk"), StringToInteger("ANto"), StringToInteger("Aamk"), StringToInteger("ANto"), StringToInteger("Aamk"), StringToInteger("ANto"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), StringToInteger("Aamk"), StringToInteger("ANms"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.Tinker] = { StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("A019"), StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("A019"), StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("Aamk"), StringToInteger("A01B"), StringToInteger("A019"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("ANde"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), StringToInteger("Aamk"), StringToInteger("A01A"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.PitLord] = { StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANca"), StringToInteger("ANdo"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANdo"), StringToInteger("ANca"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("ANdo"), StringToInteger("ANca"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANht"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), StringToInteger("Aamk"), StringToInteger("ANrf"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.AvatarOfFlame] = { StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANlm"), StringToInteger("ANso"), StringToInteger("ANvc"), StringToInteger("ANvc"), StringToInteger("ANvc"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), StringToInteger("Aamk"), StringToInteger("ANia"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.PandarenBrewmaster] = { StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANdb"), StringToInteger("ANef"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANef"), StringToInteger("ANdb"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("ANef"), StringToInteger("ANdb"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANdh"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), StringToInteger("Aamk"), StringToInteger("ANbf"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.BeastMaster] = { StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANst"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("ANst"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("ANst"), StringToInteger("Aamk"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsg"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsq"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), StringToInteger("Aamk"), StringToInteger("ANsw"), }
+Constant.LearnSKill[Constant.UnitType.HeroList.BansheeRanger] = { StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANch"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANch"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANch"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANdr"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANsi"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), StringToInteger("Aamk"), StringToInteger("ANba"), }
+end
+function SetGameBoardValue(RowIndex, ColumnIndex, Value)
+MultiboardSetItemValue(MultiboardGetItem(Constant.GameBoard, RowIndex, ColumnIndex), Value)
+end
+function RegisterAnyUnitEvent(t, e)
+for i = 1, #Constant.Group.Players do
+TriggerRegisterPlayerUnitEvent(t, Constant.Group.Players[i], e, nil)
+end
+TriggerRegisterPlayerUnitEvent(t, Base.NEUTRAL_AGGRESSIVE, e, nil)
+TriggerRegisterPlayerUnitEvent(t, Base.NEUTRAL_PASSIVE, e, nil)
+end
+function KillSummary(Killer, Dead)
+local DeadPlayer = GetOwningPlayer(Dead)
+if (DeadPlayer ~= Base.NEUTRAL_AGGRESSIVE and DeadPlayer ~= Base.NEUTRAL_PASSIVE) then
+local DeadPlayerLine = Constant.PlayerData[DeadPlayer]["PlayerLine"]
+Constant.PlayerData[DeadPlayer]["LoseUnit"] = Constant.PlayerData[DeadPlayer]["LoseUnit"] + 1
+SetGameBoardValue(DeadPlayerLine, 6, Constant.PlayerData[DeadPlayer]["LoseUnit"])
+if (IsHero(Dead)) then
+Constant.PlayerData[DeadPlayer]["LoseHero"] = Constant.PlayerData[DeadPlayer]["LoseHero"] + 1
+SetGameBoardValue(DeadPlayerLine, 2, Constant.PlayerData[DeadPlayer]["LoseHero"])
+end
+if (IsStructure(Dead)) then
+Constant.PlayerData[DeadPlayer]["LoseStructure"] = Constant.PlayerData[DeadPlayer]["LoseStructure"] + 1
+SetGameBoardValue(DeadPlayerLine, 4, Constant.PlayerData[DeadPlayer]["LoseStructure"])
+end
+end
+if (Killer ~= nil) then
+local KillerPlayer = GetOwningPlayer(Killer)
+if (KillerPlayer ~= Base.NEUTRAL_AGGRESSIVE and KillerPlayer ~= Base.NEUTRAL_PASSIVE) then
+local KillerPlayerLine = Constant.PlayerData[KillerPlayer]["PlayerLine"]
+Constant.PlayerData[KillerPlayer]["KillUnit"] = Constant.PlayerData[KillerPlayer]["KillUnit"] + 1
+SetGameBoardValue(KillerPlayerLine, 5, Constant.PlayerData[KillerPlayer]["KillUnit"])
+if (IsHero(Dead)) then
+Constant.PlayerData[KillerPlayer]["KillHero"] = Constant.PlayerData[KillerPlayer]["KillHero"] + 1
+SetGameBoardValue(KillerPlayerLine, 1, Constant.PlayerData[KillerPlayer]["KillHero"])
+end
+if (IsStructure(Dead)) then
+Constant.PlayerData[KillerPlayer]["DestroyStructure"] = Constant.PlayerData[KillerPlayer]["DestroyStructure"] + 1
+SetGameBoardValue(KillerPlayerLine, 3, Constant.PlayerData[KillerPlayer]["DestroyStructure"])
+end
+if (IsPlayerAlly(KillerPlayer, DeadPlayer)) then
+Constant.PlayerData[KillerPlayer]["KillAllianceUnit"] = Constant.PlayerData[KillerPlayer]["KillAllianceUnit"] + 1
+SetGameBoardValue(KillerPlayerLine, 8, Constant.PlayerData[KillerPlayer]["KillAllianceUnit"])
+if (IsHero(Dead)) then
+Constant.PlayerData[KillerPlayer]["KillAllianceHero"] = Constant.PlayerData[KillerPlayer]["KillAllianceHero"] + 1
+SetGameBoardValue(KillerPlayerLine, 7, Constant.PlayerData[KillerPlayer]["KillAllianceHero"])
+end
+end
+end
+end
+end
+function SourceReward(Killer, Dead)
+if (Killer ~= nil) then
+local KillerPlayer = GetOwningPlayer(Killer)
+if (not IsStructure(Dead) and KillerPlayer ~= Base.NEUTRAL_AGGRESSIVE and KillerPlayer ~= Base.NEUTRAL_PASSIVE and IsUnitEnemy(Dead, KillerPlayer)) then
+local Level = GetUnitLevel(Dead)
+local RewardGold, RewardLumber = 0, 0
+if (IsHero(Dead)) then
+RewardGold = Level * Constant.Value.KillHeroRewardGold
+RewardLumber = Level * Constant.Value.KillHeroRewardLumber
+else
+local UnitType = GetUnitTypeId(Dead)
+local ExtraGold, ExtraLumber = 0, 0
+if (UnitType == Constant.UnitType.GoblinMiner) then
+ExtraGold = 750
+ExtraLumber = 250
+elseif (UnitType == Constant.UnitType.IronGoblin) then
+ExtraGold = 500
+ExtraLumber = 750
+elseif (UnitType == Constant.UnitType.LumberTruck) then
+ExtraGold = 250
+ExtraLumber = 500
+end
+RewardGold = GetRandomInt(1, Level * (Constant.Value.KillUnitRewardGold + ExtraGold))
+RewardLumber = GetRandomInt(1, Level * (Constant.Value.KillUnitRewardLumber + ExtraLumber))
+if (InOrderedTable(KillerPlayer, Constant.Group.AiPlayers)) then
+RewardGold = RewardGold * Constant.Value.AiKillReward
+RewardLumber = RewardLumber * Constant.Value.AiKillReward
+end
+end
+ModifyPlayerGold(KillerPlayer, RewardGold, true)
+ModifyPlayerLumber(KillerPlayer, RewardLumber, true)
+end
+end
+end
+function KillTip(Killer, Dead)
+local DeadPlayer = GetOwningPlayer(Dead)
+if (DeadPlayer ~= Base.NEUTRAL_PASSIVE and DeadPlayer ~= Base.NEUTRAL_AGGRESSIVE) then
+if (IsHero(Dead)) then
+local DeadString = Constant.PlayerData[DeadPlayer]["DisplayName"] .. "的英雄[" .. GetUnitName(Dead) .. "]等级" .. GetUnitLevel(Dead)
+if (Killer == nil) then
+DisplayMessage(DeadString .. "|cFF0000FF自杀|r了")
+else
+local UnitTypeString = "单位"
+if (IsHero(Killer)) then
+UnitTypeString = "英雄"
+end
+local KillType = "|cFFff0000击杀|r"
+if (IsUnitAlly(Killer, DeadPlayer)) then
+KillType = "|cff00ff00反补|r"
+end
+DisplayMessage(Constant.PlayerData[GetOwningPlayer(Killer)]["DisplayName"] .. "的" .. UnitTypeString .. "[" .. GetUnitName(Killer) .. "]等级" .. GetUnitLevel(Killer) .. KillType .. "了" .. DeadString)
+end
+else
+local UnitType = GetUnitTypeId(Dead)
+if (UnitType == Constant.UnitType.GoblinMiner or UnitType == Constant.UnitType.IronGoblin or UnitType == Constant.UnitType.LumberTruck) then
+local DeadString = Constant.PlayerData[DeadPlayer]["DisplayName"] .. "的[" .. GetUnitName(Dead) .. "]"
+if (Killer == nil) then
+DisplayMessage(DeadString .. "|cFF0000FF自杀|r了")
+else
+local UnitTypeString = "单位"
+if (IsHero(Killer)) then
+UnitTypeString = "英雄"
+end
+DisplayMessage(Constant.PlayerData[GetOwningPlayer(Killer)]["DisplayName"] .. "的" .. UnitTypeString .. "[" .. GetUnitName(Killer) .. "]等级" .. GetUnitLevel(Killer) .. "|cFFff0000消灭|r了" .. DeadString)
+end
+end
+end
+end
+end
+function GoldMineRegenerate()
+TimerFunctionOnce(Constant.Time.GoldMineRegenerate, function()
+local u = CreateUnitAtRandomPosition(Base.NEUTRAL_PASSIVE, Constant.UnitType.GoldMine)
+table.insert(Constant.Group.GoldMines, u)
+local RandomValue = math.ceil(Constant.Value.GeneralGoldMineGold * Constant.Value.GoldMineRandomRate)
+SetResourceAmount(u, GetRandomInt(Constant.Value.GeneralGoldMineGold - RandomValue, Constant.Value.GeneralGoldMineGold + RandomValue))
+end)
+end
+function ClearUnitData(u)
+if (GetOwningPlayer(u) == Base.NEUTRAL_AGGRESSIVE) then
+OrderTableRemoveItem(Constant.Group.CenterMonster, u)
+end
+if (GetUnitTypeId(u) == Constant.UnitType.GoldMine) then
+OrderTableRemoveItem(Constant.Group.GoldMines, u)
+end
+if (IsHero(u)) then
+OrderTableRemoveItem(Constant.Group.AllStructureRepairHero, u)
+end
+end
+function GetAiPlayerName(Index)
+return Constant.AiPlayerName[Index]
+end
+function GetPlayerColorString(Index)
+return Constant.PlayerColor[Index]
+end
+function GetGroupRandomUnit(g)
+return BlzGroupUnitAt(g, GetRandomInt(0, BlzGroupGetSize(g) - 1))
+end
+function AiPlayerResearch(p, r, ut)
+local g = CreateGroup()
+GroupEnumUnitsOfPlayer(g, p, nil)
+ForGroup(g, function()
+local u = GetEnumUnit()
+if (GetUnitTypeId(u) ~= ut or not UnitIsAlive(u)) then
+GroupRemoveUnit(g, u)
+end
+end)
+local Number = BlzGroupGetSize(g)
+if (Number > 0) then
+IssueImmediateOrderById(GetGroupRandomUnit(g), r)
+end
+DestroyGroup(g)
+end
+function CheckIdleCommand(Command, Race)
+if (Race == RACE_HUMAN or Race == RACE_ORC) then
+return Command == 0 or Command == Constant.Command.Harvest or Command == Constant.Command.ResumeHarvesting
+elseif (Race == RACE_UNDEAD) then
+return Command == 0 or Command == Constant.Command.Harvest
+else
+return Command == 0 or Command == Constant.Command.Smart
+end
+end
+function GetPlayerIdleBuilders(p)
+local NowRace = GetPlayerRace(p)
+local BuilderType = Constant.UnitType.Worker[NowRace]
+local Builders = {}
+local g = CreateGroup()
+GroupEnumUnitsOfPlayer(g, p, nil)
+ForGroup(g, function()
+local u = GetEnumUnit()
+local NowCommand = GetUnitCurrentOrder(u)
+if (GetUnitTypeId(u) == BuilderType and UnitIsAlive(u) and CheckIdleCommand(NowCommand, NowRace)) then
+table.insert(Builders, u)
+end
+end)
+DestroyGroup(g)
+return Builders
+end
+function Build(u, ut)
+local X, Y = GetUnitX(u), GetUnitY(u)
+for i = 1, Constant.Value.BuildTryMax do
+if (IssueBuildOrderById(u, ut, GetRandomReal(X - 1000, X + 1000), GetRandomReal(Y - 1000, Y + 1000))) then
+break
+end
+end
+end
+function BuyWorker(p, ut)
+for i = 1, #Constant.Group.AmmoDumps do
+IssueNeutralImmediateOrderById(p, Constant.Group.AmmoDumps[i], ut)
+end
+end
+function MonsterDropItem(x, y, level)
+local RandomMax = level * Constant.Value.DropItemLevelRate
+if (GetRandomReal(0, 100) < RandomMax) then
+CreateItem(ChooseRandomItemEx(ITEM_TYPE_ANY, -1), x, y)
+end
+end
+function HasRaceBase(p)
+local BaseType = Constant.UnitType.Base[GetPlayerRace(p)]
+if (GetPlayerUnitTypeCount(p, BaseType[1]) > 0) then
+return true
+else
+if (GetPlayerUnitTypeCount(p, BaseType[2]) > 0) then
+return true
+else
+return GetPlayerUnitTypeCount(p, BaseType[3]) > 0
+end
+end
+end
+function UnitSkillNowMagicalIsEnough(u, a)
+return GetUnitMagical(u) >= BlzGetAbilityManaCost(a, GetUnitAbilityLevel(u, a) - 1)
+end
+function GetUnitSkillNowSpellDistance(u, a)
+return BlzGetAbilityRealLevelField(BlzGetUnitAbility(u, a), ABILITY_RLF_CAST_RANGE, GetUnitAbilityLevel(u, a) - 1)
+end
+function GetUnitSkillNowSpellEffectRange(u, a)
+return BlzGetAbilityRealLevelField(BlzGetUnitAbility(u, a), ABILITY_RLF_AREA_OF_EFFECT, GetUnitAbilityLevel(u, a) - 1)
+end
+function ClearPlayerData(p)
+Constant.PlayerData[p] = nil
+OrderTableRemoveItem(Constant.Group.Players, p)
+if (GetPlayerController(p) == MAP_CONTROL_COMPUTER) then
+OrderTableRemoveItem(Constant.Group.AiPlayers, p)
+else
+OrderTableRemoveItem(Constant.Group.UserPlayers, p)
+end
+for i = 1, #Constant.Group.Alliance do
+if (InOrderedTable(p, Constant.Group.Alliance[i])) then
+OrderTableRemoveItem(Constant.Group.Alliance[i], p)
+break
+end
+end
+end
+function PauseAllUnit()
+local g = CreateGroup()
+GroupEnumUnitsInRect(g, Base.MAP_AREA, nil)
+ForGroup(g, function()
+PauseUnit(GetEnumUnit(), true)
+end)
+DestroyGroup(g)
+end
+function ClearInvalidVariable()
+ClearInvalidVariable = nil
+Constant.Version = nil
+Constant.Coordinate.AmmoDump = nil
+Constant.Coordinate.Tavern = nil
+Constant.Number.Seal = nil
+Constant.Number.MaxPlayer = nil
+Constant.Number.BaseGoldMiner = nil
+Constant.UnitType.AmmoDump = nil
+Constant.UnitType.Spell = nil
+Constant.UnitType.UnknownOrganism = nil
+Constant.UnitType.Seal = nil
+Constant.Value.StartGold = nil
+Constant.Value.StartLumber = nil
+Constant.AiPlayerName = nil
+Constant.PlayerColor=nil
+RegisterAi = nil
+Ai_Race = nil
+Ai_Research = nil
+Ai_Build = nil
+Ai_BuyWork = nil
+Ai_GoblinMinerMining = nil
+Ai_BuyHero = nil
+RegisterAnyUnitEvent=nil
+GetAiPlayerName = nil
+GetPlayerColorString = nil
+end
+function InitMonster()
+InitMonster=nil
+InitPowerMonster()
+InitCenterMonster()
+InitRandomMonster()
+end
+function InitPowerMonster()
+InitPowerMonster=nil
+TimerFunctionOnce(Constant.Time.PowerMonster,function()
+local Coordinate=Constant.Coordinate.PowerMonster
+for i=1,#Constant.PowerMonster do
+local Info=Constant.PowerMonster[i]
+for j=1,Info["Number"] do
+CreateUnitAtCoordinate(Base.NEUTRAL_AGGRESSIVE,Info["Id"],Coordinate[1],Coordinate[2])
+end
+end
+Constant.Coordinate.PowerMonster=nil
+Constant.Time.PowerMonster=nil
+Constant.PowerMonster=nil
+end)
+end
+function InitCenterMonster()
+InitCenterMonster=nil
+TimerFunction(Constant.Time.CenterMonsterCreateInterval,function()
+if (Constant.GameOver) then
+DestroyTimer(GetExpiredTimer())
+else
+if (#Constant.Group.CenterMonster < Constant.Number.CenterMonster and GetPlayerUnitsCount(Base.NEUTRAL_AGGRESSIVE)<Constant.Number.AllMonster) then
+for i = 1, #Constant.UnitType.CenterMonster do
+table.insert(Constant.Group.CenterMonster,CreateUnitAtCoordinate(Base.NEUTRAL_AGGRESSIVE,Constant.UnitType.CenterMonster[i],0,0))
+end
+end
+end
+end)
+end
+function InitRandomMonster()
+InitRandomMonster=nil
+TimerFunctionOnce(Constant.Time.RandomMonster,function ()
+DisplayMessage("从现在开始，以10分钟为一个周期，每秒会在地图随机位置产生怪物",nil,true,30)
+TimerFunction(Constant.Time.RandomMonsterCreateInterval,function ()
+if(Constant.GameOver)then
+DestroyTimer(GetExpiredTimer())
+else
+local Count=0
+TimerFunction(1,function ()
+if(Constant.GameOver)then
+DestroyTimer(GetExpiredTimer())
+else
+if(Count<Constant.Number.AllMonster and GetPlayerUnitsCount(Base.NEUTRAL_AGGRESSIVE)<Constant.Number.AllMonster)then
+CreateUnitAtRandomPosition(Base.NEUTRAL_AGGRESSIVE,Constant.UnitType.GeneralMonster[GetRandomInt(1,#Constant.UnitType.GeneralMonster)])
+Count=Count+1
+else
+DestroyTimer(GetExpiredTimer())
+end
+end
+end)
+end
+end)
+Constant.Time.RandomMonster=nil
+end)
+end
+function Skill_Effect_ShadowAttack(DamageTarget)
+local ReduceArmor = 7
+local Duration, HeroDuration = 60, 30
+if (IsHero(DamageTarget)) then
+HeroDuration = HeroDuration
+end
+ModifyUnitArmor(DamageTarget, ReduceArmor, false)
+TimerFunctionOnce(Duration, function()
+ModifyUnitArmor(DamageTarget, ReduceArmor, true)
+end)
+end
+function Skill_Effect_SilenceAura(u)
+local p = GetOwningPlayer(u)
+TimerFunction(3, function()
+if (UnitIsAlive(u) and Constant.GameOver == false) then
+SetUnitOwner(Constant.Unit.Spell, p, false)
+BlzUnitDisableAbility(Constant.Unit.Spell, Constant.Skill.SilenceAuraAction, false, false)
+IssuePointOrder(Constant.Unit.Spell, "silence", GetUnitX(u), GetUnitY(u))
+BlzUnitDisableAbility(Constant.Unit.Spell, Constant.Skill.SilenceAuraAction, true, false)
+SetUnitOwner(Constant.Unit.Spell, Base.NEUTRAL_PASSIVE, false)
+else
+DestroyTimer(GetExpiredTimer())
+end
+end)
+end
+function Skill_Effect_AttributeMod(u)
+local AddStrength, AddAgile, AddIntelligence = 2, 2, 3
+local Primary = BlzGetUnitIntegerField(u, UNIT_IF_PRIMARY_ATTRIBUTE)
+if (Primary == 1) then
+AddAgile = 1
+AddIntelligence = 1
+elseif (Primary == 3) then
+AddStrength = 1
+AddAgile = 3
+AddIntelligence = 1
+end
+ModifyHeroStrength(u, AddStrength, true)
+ModifyHeroAgile(u, AddAgile, true)
+ModifyHeroIntelligence(u, AddIntelligence, true)
+end
+function Skill_Effect_Repair(u)
+if (not UnitHaveSkill(u, Constant.Skill.RepairArmorCheck)) then
+local AddArmorParameter = 100
+local AddArmor = GetUnitAbilityLevel(u, Constant.Skill.Repair) * AddArmorParameter
+local p = GetOwningPlayer(u)
+local Delay, NowTime = 5, 0
+ModifyUnitArmor(u, AddArmor, true)
+UnitAddAbility(u, Constant.Skill.RepairArmorCheck)
+TimerFunction(1, function()
+if (InOrderedTable(p, Constant.Group.Players) and Constant.GameOver==false) then
+if (GetUnitCurrentOrder(u) == Constant.Command.Repair) then
+NowTime = 0
+end
+if (NowTime < Delay) then
+NowTime = NowTime + 1
+else
+DestroyTimer(GetExpiredTimer())
+UnitRemoveAbility(u, Constant.Skill.RepairArmorCheck)
+ModifyUnitArmor(u, AddArmor, false)
+end
+else
+DestroyTimer(GetExpiredTimer())
+UnitRemoveAbility(u, Constant.Skill.RepairArmorCheck)
+ModifyUnitArmor(u, AddArmor, false)
+end
+end)
+end
+end
+function Skill_Effect_AllStructureRepair(u)
+local AddHPParameter, AddArmorParameter, RepairParameter = 1000, 50, 50
+local Duration, SkillLevel = 120, GetUnitAbilityLevel(u, Constant.Skill.AllStructureRepair)
+local AddHP, AddArmor, Repair = AddHPParameter * SkillLevel, AddArmorParameter * SkillLevel, RepairParameter * SkillLevel
+local p = GetOwningPlayer(u)
+local g = CreateGroup()
+for i = 1, #Constant.Group.Alliance do
+local Alliance = Constant.Group.Alliance[i]
+if (InOrderedTable(p, Alliance)) then
+for j = 1, #Alliance do
+local NowPlayer = Alliance[j]
+GroupEnumUnitsOfPlayer(g, NowPlayer, nil)
+ForGroup(g, function()
+local Target = GetEnumUnit()
+if (gcudFilter({ "Structure", "Alive" }, { MainUnit = Target })) then
+UnitAddAbility(Target, Constant.Skill.AllStructureRepairEffect)
+ModifyUnitArmor(Target, AddArmor, true)
+ModifyUnitMaxHP(Target, AddHP, true)
+ModifyUnitHP(Target, AddHP, true)
+local NowTime = 0
+TimerFunction(1, function()
+if(Constant.GameOver)then
+DestroyTimer(GetExpiredTimer())
+if (UnitIsAlive(Target)) then
+UnitRemoveAbility(Target, Constant.Skill.AllStructureRepairEffect)
+ModifyUnitArmor(Target, AddArmor, false)
+ModifyUnitMaxHP(Target, AddHP, false)
+end
+else
+if (NowTime < Duration and UnitIsAlive(Target)) then
+NowTime = NowTime + 1
+ModifyUnitHP(Target, Repair, true)
+else
+if (UnitIsAlive(Target)) then
+UnitRemoveAbility(Target, Constant.Skill.AllStructureRepairEffect)
+ModifyUnitArmor(Target, AddArmor, false)
+ModifyUnitMaxHP(Target, AddHP, false)
+end
+DestroyTimer(GetExpiredTimer())
+end
+end
+end)
+end
+end)
+end
+break
+end
+end
+DestroyGroup(g)
+end
+function Skill_Effect_Wall(u)
+local AddHPParameter, AddArmorParameter = 1000, 20
+local SkillLevel = GetUnitAbilityLevel(u, Constant.Skill.Wall)
+local AddHP, AddArmor = AddHPParameter * SkillLevel, AddArmorParameter * SkillLevel
+local Wall = CreateUnitAtCoordinate(GetOwningPlayer(u), Constant.UnitType.Wall, GetSpellTargetX(), GetSpellTargetY())
+ModifyUnitMaxHP(Wall, AddHP, true)
+ModifyUnitHP(Wall, AddHP, true)
+ModifyUnitArmor(Wall, AddArmor, true)
+end
+function InitAllTrigger()
+InitAllTrigger = nil
+InitGameTimeAction()
+InitGameOverCheck()
+InitShowPlayerUnitCoordinateInfo()
+InitEvent()
+end
+function InitUnknownOrganism()
+InitUnknownOrganism = nil
+local t = CreateTrigger()
+TriggerRegisterUnitInRange(t, Constant.Unit.UnknownOrganism, 256, nil)
+TriggerAddAction(t, function()
+local u = GetTriggerUnit()
+local p = GetOwningPlayer(u)
+if (not IsStructure(u) and p ~= Base.NEUTRAL_AGGRESSIVE and p ~= Base.NEUTRAL_PASSIVE) then
+DestroyEffect(AddSpecialEffect("Abilities/Spells/Human/MassTeleport/MassTeleportTarget.mdl", GetUnitX(u), GetUnitY(u)))
+SetUnitX(u, GetRandomX())
+SetUnitY(u, GetRandomY())
+IssueImmediateOrder(u, "stop")
+end
+end)
+TimerFunction(Constant.Time.UnknownOrganismCommandInterVal, function()
+if (Constant.GameOver or not UnitIsAlive(Constant.Unit.UnknownOrganism)) then
+DestroyTimer(GetExpiredTimer())
+Constant.Unit.UnknownOrganism = nil
+else
+if (GetUnitCurrentOrder(Constant.Unit.UnknownOrganism) ~= Constant.Command.Move) then
+IssuePointOrder(Constant.Unit.UnknownOrganism,"move", GetRandomX(), GetRandomY())
+end
+EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(Constant.Unit.UnknownOrganism), GetUnitY(Constant.Unit.UnknownOrganism), Constant.Value.UnknownOrganismForceAttackRange, function(u)
+local p = GetOwningPlayer(u)
+if (not IsStructure(u) and p ~= Base.NEUTRAL_AGGRESSIVE and p ~= Base.NEUTRAL_PASSIVE) then
+IssueTargetOrder(u, "attack", Constant.Unit.UnknownOrganism)
+end
+end)
+end
+end)
+end
+function InitGameTimeAction()
+InitGameTimeAction = nil
+TimerFunction(1, function()
+if (Constant.GameOver) then
+DestroyTimer(GetExpiredTimer())
+else
+Constant.GameTime = Constant.GameTime + 1
+if(math.fmod(Constant.GameTime,Constant.Time.DestructableClearInterval)==0)then
+EnumDestructablesInRect(Base.MAP_AREA,nil,function ()
+local d=GetEnumDestructable()
+if(GetDestructableLife(d)<1)then
+RemoveDestructable(d)
+end
+end)
+end
+local Time = Constant.GameTime
+local TimeString = ""
+local Hour = math.floor(Time / 3600)
+if (Hour > 0) then
+TimeString = TimeString .. Hour .. "时"
+end
+Time = Time - (Hour * 3600)
+local Minutes = math.floor(Time / 60)
+if (Minutes > 0) then
+TimeString = TimeString .. Minutes .. "分"
+end
+Time = Time - (Minutes * 60)
+if (Time > 0) then
+TimeString = TimeString .. Time .. "秒"
+end
+SetGameBoardValue(Constant.Value.ExtraInfoRowIndex, 1, TimeString)
+SetGameBoardValue(Constant.Value.ExtraInfoRowIndex, 3, GetNowTimeString())
+for i = 1, #Constant.Group.AiPlayers do
+ModifyPlayerGold(Constant.Group.AiPlayers[i], Constant.Value.AiPlayerGoldReward, true)
+ModifyPlayerLumber(Constant.Group.AiPlayers[i], Constant.Value.AiPlayerLumberReward, true)
+end
+SetGameBoardValue(Constant.Value.ExtraInfoRowIndex, 10, GetPlayerUnitsCount(Base.NEUTRAL_AGGRESSIVE))
+for i = 1, #Constant.Group.Players do
+local p=Constant.Group.Players[i]
+SetGameBoardValue(Constant.PlayerData[p]["PlayerLine"], 9, GetPlayerUnitsCount(p))
+end
+end
+end)
+end
+function InitGameOverCheck()
+InitGameOverCheck = nil
+TimerFunction(5, function()
+if (Constant.GameOver) then
+DestroyTimer(GetExpiredTimer())
+else
+for i = 1, #Constant.Group.Players do
+local p = Constant.Group.Players[i]
+if (GetPlayerSlotState(p) == PLAYER_SLOT_STATE_LEFT) then
+local Units = CreateGroup()
+GroupEnumUnitsOfPlayer(Units, p, nil)
+ForGroup(Units, function()
+local u = GetEnumUnit()
+ClearUnitData(u)
+RemoveUnit(u)
+end)
+DestroyGroup(Units)
+end
+if (GetPlayerUnitsCount(p) == 0) then
+DisplayMessage("你的所有单位被消灭了,你失败了,但你仍然可以继续观战",p,true,60)
+DisplayMessage( Constant.PlayerData[p]["DisplayName"] .. "的势力已经从诺森德抹除",nil,true,60)
+SetGameBoardValue(Constant.PlayerData[p]["PlayerLine"], 9, "0")
+SetGameBoardValue(Constant.PlayerData[p]["PlayerLine"], 10, "|cFF949596失败|r")
+ClearPlayerData(p)
+break
+end
+end
+for i = 1, #Constant.Group.Alliance do
+if (#Constant.Group.Alliance[i] == 0) then
+table.remove(Constant.Group.Alliance, i)
+break
+end
+end
+if (#Constant.Group.Alliance == 1) then
+Constant.GameOver = true
+for i = 1, #Constant.Group.Players do
+local p = Constant.Group.Players[i]
+DisplayMessage( Constant.PlayerData[p]["DisplayName"] .. "获得了这场游戏的胜利！",nil,false,60)
+SetGameBoardValue(Constant.PlayerData[p]["PlayerLine"], 10, "|cFFFF0000胜利|r")
+end
+FogEnable(false)
+FogMaskEnable(false)
+TimerFunction(5, function()
+PauseAllUnit()
+end)
+elseif (#Constant.Group.Alliance == 0) then
+Constant.GameOver = true
+PlayThematicMusic("Sound/Music/mp3Music/TragicConfrontation.mp3")
+DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 30, "无数贪婪的冒险者来到诺森德,妄图攫取那未知的巨大利益,但他们都失败了")
+TimerFunctionOnce(5, function()
+DisplayTimedTextToPlayer(GetLocalPlayer(), 0, 0, 30, "诺森德仍然吹着凛冽的寒风,大雪将还未散去的血腥掩埋,等待着下一批冒险者的到来")
+end)
+TimerFunction(5, function()
+PauseAllUnit()
+end)
+end
+end
+end)
+end
+function InitShowPlayerUnitCoordinateInfo()
+InitShowPlayerUnitCoordinateInfo = nil
+TimerFunction(Constant.Time.ShowPlayerUnitsCoordinateInterval, function()
+if (Constant.GameOver) then
+DestroyTimer(GetExpiredTimer())
+else
+for i = 1, #Constant.Group.Players do
+local p = Constant.Group.Players[i]
+local Number = GetPlayerUnitsCount(p)
+if (Number > 0 and Number < Constant.Number.ShowPlayerUnitsCoordinateMin) then
+local g = CreateGroup()
+GroupEnumUnitsOfPlayer(g, p, nil)
+ForGroup(g, function()
+local u=GetEnumUnit()
+if(UnitIsAlive(u))then
+PingMinimapEx(GetUnitX(u), GetUnitY(u), 5, 255, 0, 0, true)
+end
+end)
+DestroyGroup(g)
+DisplayMessage( "由于你的单位小于" .. Constant.Number.ShowPlayerUnitsCoordinateMin .. "个,位置信息已被发送给所有玩家",p,true,30)
+end
+end
+end
+end)
+end

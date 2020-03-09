@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="ad4dc371-723d-4c3d-a19e-34539aee05ce" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution>
+      <executable />
+    </execution>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+        <option value="JavaScript File" />
+        <option value="HTML File" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="1XqEH0zHiZIEU58RGTPJs96QID3" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultHtmlFileTemplate" value="HTML File" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="list.type.of.created.stylesheet" value="CSS" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\www\PON1Tools\CompileLua" />
+      <recent name="E:\www\PON1Tools\CompileLua\php" />
+    </key>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ad4dc371-723d-4c3d-a19e-34539aee05ce" name="Default Changelist" comment="" />
+      <created>1581765132635</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1581765132635</updated>
+      <workItem from="1581765133846" duration="1735000" />
+      <workItem from="1581768843154" duration="1584000" />
+      <workItem from="1581783720342" duration="241000" />
+      <workItem from="1581818432030" duration="639000" />
+      <workItem from="1581821074859" duration="3228000" />
+      <workItem from="1582000241224" duration="94000" />
+      <workItem from="1582001959176" duration="28000" />
+      <workItem from="1582002073654" duration="566000" />
+      <workItem from="1582025658869" duration="10668000" />
+      <workItem from="1582208615679" duration="12000" />
+      <workItem from="1582208734480" duration="1515000" />
+      <workItem from="1582258370307" duration="3506000" />
+      <workItem from="1582280714366" duration="4287000" />
+      <workItem from="1582290862229" duration="3104000" />
+      <workItem from="1582332408028" duration="566000" />
+      <workItem from="1582344265752" duration="3288000" />
+      <workItem from="1582693521461" duration="135000" />
+      <workItem from="1583727124524" duration="515000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="776" y="443" key="NewPhpFileDialog" timestamp="1582030198691">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="776" y="443" key="NewPhpFileDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1582030198691" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1582026131217">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1582026131217" />
+  </component>
+</project>

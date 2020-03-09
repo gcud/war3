@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>诺森德之殇1-混乱大陆技能升级工具</title>
+    <link rel="stylesheet" href="css.css">
+</head>
+<body>
+选择英雄
+<select id="HeroList" onchange="SelectHero(this.value)"></select>
+<table>
+    <tr data-type="head">
+        <td>技能</td>
+        <td>代码</td>
+        <td></td>
+    </tr>
+    <tr data-id="Skill1">
+        <td><input name="name" value="神圣之光"></td>
+        <td><input name="code" value="AHhb" maxlength="4"></td>
+        <td>
+            <button onclick="Up(this)">↑</button>
+            <button onclick="Down(this)">↓</button>
+        </td>
+    </tr>
+    <tr data-id="Skill2">
+        <td><input name="name" value="神圣护甲"></td>
+        <td><input name="code" value="AHds" maxlength="4"></td>
+        <td>
+            <button onclick="Up(this)">↑</button>
+            <button onclick="Down(this)">↓</button>
+        </td>
+    </tr>
+    <tr data-id="Skill3">
+        <td><input name="name" value="专注光环"></td>
+        <td><input name="code" value="AHad" maxlength="4"></td>
+        <td>
+            <button onclick="Up(this)">↑</button>
+            <button onclick="Down(this)">↓</button>
+        </td>
+    </tr>
+    <tr data-id="Final">
+        <td><input name="name" value="复活" placeholder="只能填写终极技能" class="Final"></td>
+        <td><input name="code" value="AHre" class="Final"></td>
+        <td>
+            <button onclick="Up(this)">↑</button>
+            <button onclick="Down(this)">↓</button>
+        </td>
+    </tr>
+    <tr data-id="AttributeAdd">
+        <td><input name="name" value="属性附加" readonly></td>
+        <td><input name="code" value="Aamk" readonly></td>
+        <td>
+            <button onclick="Up(this)">↑</button>
+            <button onclick="Down(this)">↓</button>
+        </td>
+    </tr>
+</table>
+模式:<input type="radio" value="0" name="mode" checked>交替<input type="radio" value="1" name="mode" disabled>自定义<br>
+<button onclick="Generate()">生成</button>
+<br>
+lua代码
+<textarea id="Lua"></textarea>
+<button onclick="CopyLua()">复制</button>
+<br>
+技能顺序
+<p id="SkillOrder"></p>
+<script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.slim.min.js"></script>
+<script src="data.js"></script>
+<script src="js.js"></script>
+</body>
+</html>

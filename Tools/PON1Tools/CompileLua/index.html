@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>编译Lua</title>
+    <script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script>
+    <script src="js.js"></script>
+</head>
+<body>
+<h3>本工具需要php环境,不会检查任何语法</h3>
+<form id="Config">
+    项目根目录<input type="text" name="root_path" style="width: 50%"><br>如E:\Warcraft III\Maps\Pain of Northrend\1-Chaos Land\Map\Lua\<br>
+    去除注释<input type="radio" value="1" name="remove_comment">是<input type="radio" value="0" name="remove_comment">否
+</form>
+<button onclick="SaveConfig()">保存配置</button><br>
+上次编译时间:<span id="LastCompile"></span>,总行数:<span id="LineNumber"></span>,字符数:<span id="CharacterNumber"></span><br>
+<button onclick="Compile()">开始编译</button><br>
+<textarea id="CompileResult" style="width: 100%" rows="40"></textarea>
+<button onclick="CopyCompileContent()">复制编译结果</button>
+</body>
+</html>

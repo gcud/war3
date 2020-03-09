@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>技能耗魔计算</title>
+</head>
+<body>
+1级基准耗魔<input id="Base"><br>
+耗魔比<input id="Rate" value="1.25"><br>
+<div id="List">
+
+</div>
+<script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.slim.min.js"></script>
+<script>
+function RenderHtml(MagicalCostList) {
+    let Html = '';
+    for (let i = 0; i < 8; i++) {
+        Html+=`等级${i+2}<input value="${MagicalCostList[i]}"><br>`;
+    }
+    $("#List").html(Html);
+}
+function Change(){
+    let Rate=parseFloat($("#Rate").val());
+    let Base=parseInt($("#Base").val());
+    if(Rate>0&&Base>0){
+     let List=[];
+        for (let i = 0; i < 8; i++) {
+            let New=parseInt(Base*Rate);
+            List.push(New);
+            Base=New;
+        }
+        RenderHtml(List);
+    }
+}
+$("#Base").on("change",function () {
+Change();
+});
+$("#Rate").on("change",function () {
+    Change();
+});
+</script>
+</body>
+</html>
