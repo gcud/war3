@@ -43,19 +43,22 @@ function Ai_Hero_BindInRange(h,p)
 end
 
 function Ai_Hero_BuyItem(p,Shopper)
-    if Shopper==Constant.Unit.WeaponShoper then
-        Ai_Hero_BuyWeapon(p)
-    else
-        Ai_Hero_BuyArmor(p)
-    end
+    Ai_Hero_BuyGrocery(p,Shopper)
+    Ai_Hero_BuyArmor(p,Shopper)
+    Ai_Hero_BuyWeapon(p,Shopper)
 end
 
-function Ai_Hero_BuyWeapon(p)
+function Ai_Hero_BuyWeapon(p,Shopper)
     --铁剑
-    IssueNeutralImmediateOrderById(p, Constant.Unit.WeaponShoper, Constant.ItemType.IronSword)
+    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.IronSword)
 end
 
-function Ai_Hero_BuyArmor(p)
+function Ai_Hero_BuyArmor(p,Shopper)
     --皮质头盔
-    IssueNeutralImmediateOrderById(p, Constant.Unit.ArmorShoper, Constant.ItemType.LeatherHelmet)
+    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LeatherHelmet)
+end
+
+function Ai_Hero_BuyGrocery(p,Shopper)
+    --生命护身符
+    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LifeAmulet)
 end

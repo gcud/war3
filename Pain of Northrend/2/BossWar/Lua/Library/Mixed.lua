@@ -45,7 +45,6 @@ end
 
 --提升技能熟练度
 function IncreaseAbilityProficiency(p,SkillId)
-    print(GetPlayerName(p).."发动效果")
     for i = 1, #PlayerData[p].SkillInfo do
         local UnitAbility=PlayerData[p].SkillInfo[i]
         if UnitAbility.Id==SkillId then

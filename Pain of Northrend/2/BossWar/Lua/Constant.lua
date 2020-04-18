@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = true,
-        Version = "20200414",
+        Version = "20200418",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -16,6 +16,7 @@ function InitConstant()
             MonsterAreaUpY=3488,
             WeaponShoper={-3000,-1900},
             ArmorShoper={-3000,-1750},
+            GroceryShoper={-3000,-1600},
             ReviveStone={-2500,-1700}
         },
         --时间
@@ -57,6 +58,8 @@ function InitConstant()
             WeaponShoper=gcudLua.StringToInteger("h000"),
             --防具商人
             ArmorShoper=gcudLua.StringToInteger("n002"),
+            --杂货商人
+            GroceryShoper=gcudLua.StringToInteger("n003"),
             --复活石
             ReviveStone=gcudLua.StringToInteger("nbsw"),
             --英雄列表
@@ -70,6 +73,7 @@ function InitConstant()
             Speller = nil,
             WeaponShoper=nil,
             ArmorShoper=nil,
+            GroceryShoper=nil,
             ReviveStone=nil
         },
         --技能
@@ -84,6 +88,8 @@ function InitConstant()
             IronSword=gcudLua.StringToInteger("I000"),
             --皮质头盔
             LeatherHelmet=gcudLua.StringToInteger("I001"),
+            --生命护身符
+            LifeAmulet=gcudLua.StringToInteger("prvt"),
         },
         --Buff
         Buff = {},
