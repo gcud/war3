@@ -1,0 +1,10 @@
+F:\Application\Myself\合并lua\合并lua\bin\Debug\合并lua.exe.config
+F:\Application\Myself\合并lua\合并lua\bin\Debug\合并lua.exe
+F:\Application\Myself\合并lua\合并lua\bin\Debug\合并lua.pdb
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.csprojAssemblyReference.cache
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.Form1.resources
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.Properties.Resources.resources
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.csproj.GenerateResource.cache
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.csproj.CoreCompileInputs.cache
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.exe
+F:\Application\Myself\合并lua\合并lua\obj\Debug\合并lua.pdb
