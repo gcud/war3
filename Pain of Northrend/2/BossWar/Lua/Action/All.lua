@@ -4,7 +4,6 @@ function Action_HeroTimerRevive(Hero, p)
     local ReviveTime=GetUnitLevel(Hero)*Constant.Value.ReviveTimeParameter
     TimerDialogSetRealTimeRemaining(ReviveDialog, ReviveTime)
     NowHero[p].ReviveTime=NowHero[p].ReviveTime+ReviveTime
-    --gcudLua.DebugMessage(NowHero[p].ReviveTime,"当前复活时间")
     TimerDialogSetTitle(ReviveDialog, GetUnitName(Hero) .. "复活时间")
     TimerDialogDisplay(ReviveDialog, true)
     gcudLua.TimerFunction(1, function()

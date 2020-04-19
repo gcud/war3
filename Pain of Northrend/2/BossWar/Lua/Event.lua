@@ -16,8 +16,7 @@ end
 function InitDamageEvent()
     InitDamageEvent = nil
     local t = CreateTrigger()
-    --RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_DAMAGING)
-    RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_DAMAGED)
+    RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_DAMAGING)
     TriggerAddAction(t, function()
         local DamageValue = GetEventDamage()
         -- 只处理正数伤害
@@ -26,8 +25,13 @@ function InitDamageEvent()
             local DamageTargetPlayer,DamageSourcePlayer=GetTriggerPlayer(),GetOwningPlayer(DamageSource)
             --攻击伤害
             if gcudLua.IsAttackDamage() then
+                --魅惑
                 if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) and IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
                     Skill_Effect_Charm(DamageSource, DamageTarget,DamageSourcePlayer)
+                end
+                --闪电攻击
+                if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.LightningAttack) and IsUnitEnemy(DamageSource,DamageTargetPlayer)then
+                    Skill_Effect_LightningAttack(DamageSource,DamageSourcePlayer,DamageTarget,DamageValue)
                 end
             end
         end

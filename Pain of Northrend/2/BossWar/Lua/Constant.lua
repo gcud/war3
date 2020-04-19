@@ -1,8 +1,8 @@
 function InitConstant()
     InitConstant = nil
     Constant = {
-        Debug = true,
-        Version = "20200418",
+        Debug = false,
+        Version = "20200419",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -66,6 +66,8 @@ function InitConstant()
             HeroList = {
                 --女妖精
                 gcudLua.StringToInteger("N001"), 
+                --闪电蜥蜴
+                gcudLua.StringToInteger("N004"), 
                 },
             },
         --单位
@@ -78,14 +80,19 @@ function InitConstant()
         },
         --技能
         Skill = {
+            --购买物品
+            BuyItem=gcudLua.StringToInteger("Apit"),
             --魅惑
             Charm=gcudLua.StringToInteger("A000"),
-            BuyItem=gcudLua.StringToInteger("Apit")
+            --闪电攻击
+            LightningAttack=gcudLua.StringToInteger("A002"),
         },
         --物品类型
         ItemType = {
             --铁剑
             IronSword=gcudLua.StringToInteger("I000"),
+            --优良铁剑
+            GoodIronSword=gcudLua.StringToInteger("I002"),
             --皮质头盔
             LeatherHelmet=gcudLua.StringToInteger("I001"),
             --生命护身符
@@ -106,5 +113,7 @@ function InitConstant()
     GameTime = 0
     --当前英雄
     NowHero = {}
+    --物品类型数据
+    ItemTypeData={}
     BindExtraConstant()
 end

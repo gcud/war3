@@ -8,10 +8,7 @@ function CommandHandle(p, Message)
         elseif (Command == "ms") then
             Command_ms(p)
         elseif (Command == "vai") then
-            local u = PlayerData[p].SelectedUnit
-            if (gcudLua.IsHero(u)) then
-                Command_vai(p) 
-                end
+            Command_vai(p) 
         end
     end
 end
@@ -40,6 +37,10 @@ end
 function Command_vai(p)
     for i = 1, #PlayerData[p].SkillInfo do
        local Skill= PlayerData[p].SkillInfo[i]
-       gcudLua.DisplayMessage(Skill.Name..":等级"..Skill.Level..",熟练度"..Skill.Proficiency,p)
+       local Info=""
+       if Skill.Proficiency~=nil then
+        Info=":等级"..Skill.Level..",熟练度"..Skill.Proficiency
+       end
+       gcudLua.DisplayMessage(Skill.Name..Info,p)
     end
 end

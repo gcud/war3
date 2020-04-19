@@ -14,4 +14,12 @@ function BindExtraConstant()
         {Id=Constant.Skill.Charm,Name="魅惑",Level=1,Proficiency=0},
         {Id=gcudLua.StringToInteger("A001"),Name="性感",Level=1,Proficiency=0},
     }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N004")]={
+        {Id=Constant.Skill.LightningAttack,Name="闪电攻击",Level=1},
+    }
+    --也没法获取物品的黄金消耗
+    ItemTypeData[Constant.ItemType.IronSword]={Gold=5}
+    ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=12}
+    ItemTypeData[Constant.ItemType.LeatherHelmet]={Gold=3}
+    ItemTypeData[Constant.ItemType.LifeAmulet]={Gold=150}
 end

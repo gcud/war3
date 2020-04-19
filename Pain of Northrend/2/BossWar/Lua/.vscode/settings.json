@@ -101,6 +101,20 @@
         "TriggerRegisterUnitInRange",
         "IssueNeutralImmediateOrderById",
         "IsUnitInRange",
-        "IssueNeutralTargetOrder"
+        "IssueNeutralTargetOrder",
+        "GetUnitX",
+        "GetUnitY",
+        "BlzSetAbilityRealLevelField",
+        "ABILITY_RLF_DAMAGE_PER_TARGET_OCL1",
+        "IssueTargetOrder",
+        "UnitRemoveAbility",
+        "DestroyLightning",
+        "AddLightning",
+        "CreateGroup",
+        "GroupEnumUnitsInRange",
+        "BlzGroupGetSize",
+        "DestroyGroup",
+        "BlzGroupUnitAt",
+        "GroupRemoveUnit"
     ]
 }

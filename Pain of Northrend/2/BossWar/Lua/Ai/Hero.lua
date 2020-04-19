@@ -50,7 +50,11 @@ end
 
 function Ai_Hero_BuyWeapon(p,Shopper)
     --铁剑
-    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.IronSword)
+    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.GoodIronSword].Gold then
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.GoodIronSword)
+    else
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.IronSword)
+    end
 end
 
 function Ai_Hero_BuyArmor(p,Shopper)
