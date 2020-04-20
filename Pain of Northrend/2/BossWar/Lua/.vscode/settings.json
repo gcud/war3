@@ -115,6 +115,14 @@
         "BlzGroupGetSize",
         "DestroyGroup",
         "BlzGroupUnitAt",
-        "GroupRemoveUnit"
+        "GroupRemoveUnit",
+        "UnitDamageTarget",
+        "AddLightningEx",
+        "ATTACK_TYPE_NORMAL",
+        "DAMAGE_TYPE_LIGHTNING",
+        "WEAPON_TYPE_WHOKNOWS",
+        "BlzGetUnitZ",
+        "ATTACK_TYPE_MELEE",
+        "DAMAGE_TYPE_POISON"
     ]
 }

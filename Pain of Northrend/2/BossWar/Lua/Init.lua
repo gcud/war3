@@ -39,17 +39,7 @@ function InitPlayerHero()
     InitPlayerHero=nil
     local Max=#Constant.UnitType.HeroList
     for i = 1, #gcudLua.Players do
-        local p = gcudLua.Players[i]
-        NowHero[p].Unit=gcudLua.CreateUnitAtCoordinate(p, Constant.UnitType.HeroList[GetRandomInt(1,Max)],Constant.Coordinate.Revive[1] ,Constant.Coordinate.Revive[2])
-        --为英雄添加第一个技能
-        local Skill=Constant.HeroSkillLists[GetUnitTypeId(NowHero[p].Unit)][1]
-        UnitAddAbility(NowHero[p].Unit,Skill.Id)
-        UnitMakeAbilityPermanent(NowHero[p].Unit, true,Skill.Id)
-        table.insert(PlayerData[p].SkillInfo,{Id=Skill.Id,Name=Skill.Name,Level=Skill.Level,Proficiency=Skill.Proficiency})
-        PlayerSelectSingleUnit(p, NowHero[p].Unit)
-        if GetPlayerController(p) == MAP_CONTROL_COMPUTER then
-            Ai_Hero_Init(NowHero[p].Unit,p)
-        end
+        gcudLua.CreateUnitAtCoordinate(gcudLua.Players[i], Constant.UnitType.HeroList[GetRandomInt(1,Max)],Constant.Coordinate.Revive[1] ,Constant.Coordinate.Revive[2])
     end
 end
 

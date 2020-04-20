@@ -1,11 +1,11 @@
 --魅惑
-function Skill_Effect_Charm(u,target,p)
+function Skill_Effect_Charm(u,target)
     local Parameter=1
     local Probability=GetUpgradeAbilityLevel(u,Constant.Skill.Charm)*Parameter
     if GetRandomInt(1,100)<=Probability then
         DestroyEffect(AddSpecialEffectTarget("Abilities/Spells/Other/Charm/CharmTarget.mdl", target, "origin"))
         SetUnitOwner(target,GetOwningPlayer(u),true)
-        IncreaseAbilityProficiency(p,Constant.Skill.Charm)
+        IncreaseAbilityProficiency(u,Constant.Skill.Charm)
     end
 end
 
@@ -51,6 +51,26 @@ function Skill_Effect_LightningAttack(DamageSource,p,BaseTarget,Damage)
                 Damage=Damage*(1-DamageReduce)
             end
             NowNumber=NowNumber+1
+        end
+    end)
+end
+
+--毒
+function Skill_Effect_Pison(u,Target)
+    local DamageParameter=1
+    local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*DamageParameter
+    local TimeParameter=1
+    local Time,NowTime=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*TimeParameter,0
+    IncreaseAbilityProficiency(u,Constant.Skill.Poison)
+    --绑定特效到单位
+    local Effect=AddSpecialEffectTarget("Abilities/Weapons/PoisonSting/PoisonStingTarget.mdl", Target, "origin")
+    gcudLua.TimerFunction(1, function()
+        if Constant.GameOver or not gcudLua.UnitIsAlive(Target) or NowTime>=Time then
+            DestroyEffect(Effect)
+            DestroyTimer(GetExpiredTimer())
+        else
+            NowTime=NowTime+1
+            UnitDamageTarget(u,Target, Damage, false, false,ATTACK_TYPE_MELEE,DAMAGE_TYPE_POISON, WEAPON_TYPE_WHOKNOWS)
         end
     end)
 end

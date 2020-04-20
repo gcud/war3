@@ -18,7 +18,7 @@ end
 
 -- 清除单位数据
 function ClearUnitData(u)
-
+    Units[u]=nil
 end
 
 --获取怪物区域随机X坐标
@@ -33,30 +33,39 @@ end
 
 --获取可提升技能等级
 function GetUpgradeAbilityLevel(u,a)
-    local p=GetOwningPlayer(u)
-    for i = 1, #PlayerData[p].SkillInfo do
-        local UnitAbility=PlayerData[p].SkillInfo[i]
-        if UnitAbility.Id==a then
-            return UnitAbility.Level
+    local SkillList=Units[u].SkillList
+    if SkillList==nil then
+        return 0
+    else
+        for i = 1, #SkillList do
+            if SkillList[i].Id==a then
+                return SkillList[i].Level
+            end
         end
     end
     return 0
 end
 
 --提升技能熟练度
-function IncreaseAbilityProficiency(p,SkillId)
-    for i = 1, #PlayerData[p].SkillInfo do
-        local UnitAbility=PlayerData[p].SkillInfo[i]
+function IncreaseAbilityProficiency(u,SkillId)
+    for i = 1, #Units[u].SkillList do
+        local UnitAbility=Units[u].SkillList[i]
         if UnitAbility.Id==SkillId then
             local Proficiency=UnitAbility.Proficiency+1
-            PlayerData[p].SkillInfo[i].Proficiency=Proficiency
-            local Message=UnitAbility.Name.."的熟练度提升了"
+            Units[u].SkillList[i].Proficiency=Proficiency
             if Proficiency==UnitAbility.Level*Constant.Value.SkillUpgradeParameter then
                 local Level=UnitAbility.Level+1
-                PlayerData[p].SkillInfo[i].Level=Level
-                Message=Message..",技能提升到"..Level.."级"
+                Units[u].SkillList[i].Level=Level
+                gcudLua.DisplayMessage(UnitAbility.Name.."提升到"..Level.."级",GetOwningPlayer(u))
             end
-            gcudLua.DisplayMessage(Message,p)
         end
+    end
+end
+
+--添加特有技能
+function AddSpecialAbility(u,Skill)
+    UnitAddAbility(u,Skill.Id)
+    if Skill.Event~=nil then
+        Skill.Event.Add(u)
     end
 end

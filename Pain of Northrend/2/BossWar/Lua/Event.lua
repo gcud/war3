@@ -26,12 +26,20 @@ function InitDamageEvent()
             --攻击伤害
             if gcudLua.IsAttackDamage() then
                 --魅惑
-                if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) and IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
-                    Skill_Effect_Charm(DamageSource, DamageTarget,DamageSourcePlayer)
-                end
+                if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) then
+                   if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                        Skill_Effect_Charm(DamageSource, DamageTarget)
+                    end
                 --闪电攻击
-                if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.LightningAttack) and IsUnitEnemy(DamageSource,DamageTargetPlayer)then
-                    Skill_Effect_LightningAttack(DamageSource,DamageSourcePlayer,DamageTarget,DamageValue)
+                elseif gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.LightningAttack) then
+                    if  IsUnitEnemy(DamageSource,DamageTargetPlayer)then
+                        Skill_Effect_LightningAttack(DamageSource,DamageSourcePlayer,DamageTarget,DamageValue)
+                    end
+                --毒
+                elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Poison)then
+                    if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].Skill_Pison_PisonPoint>0  and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                        Skill_Effect_Pison(DamageSource, DamageTarget)
+                    end
                 end
             end
         end
@@ -76,15 +84,21 @@ function InitEnterMapEvent()
             PhysicalDamageValue = 0,
             MagicDamagePercent = 0,
             MagicDamageValue = 0,
-            Strike={Rate=0,Random=0}
+            Strike={Rate=0,Random=0},
         }
         if (gcudLua.IsHero(u)) then
             local p = GetOwningPlayer(u)
-            if (gcudLua.InOrderedTable(p, gcudLua.AiPlayers)) then
-                -- ToDo:注册Ai
-                -- RegisterHeroAi(u)
+            NowHero[p].Unit=u
+            --为英雄添加第一个技能
+            Units[NowHero[p].Unit].SkillList={}
+            local Skill=Constant.HeroSkillLists[GetUnitTypeId(NowHero[p].Unit)][1]
+            AddSpecialAbility(NowHero[p].Unit,Skill)
+            UnitMakeAbilityPermanent(NowHero[p].Unit, true,Skill.Id)
+            table.insert(Units[NowHero[p].Unit].SkillList,{Id=Skill.Id,Name=Skill.Name,Level=Skill.Level,Proficiency=Skill.Proficiency})
+            PlayerSelectSingleUnit(p, NowHero[p].Unit)
+            if GetPlayerController(p) == MAP_CONTROL_COMPUTER then
+                Ai_Hero_Init(NowHero[p].Unit,p)
             end
-            --SkillInit(u, p)
         end
     end)
 end
@@ -143,8 +157,6 @@ function InitLevelUpEvent()
             gcudLua.ModifyHeroAgile(Hero, Constant.Value.AiAttributeCompensate, true)
             gcudLua.ModifyHeroIntelligence(Hero, Constant.Value.AiAttributeCompensate,
                                    true)
-        end
-        if (p ~= gcudLua.MonsterPlayer) then
         end
     end)
 end

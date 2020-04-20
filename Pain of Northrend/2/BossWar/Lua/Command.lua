@@ -35,12 +35,16 @@ end
 
 
 function Command_vai(p)
-    for i = 1, #PlayerData[p].SkillInfo do
-       local Skill= PlayerData[p].SkillInfo[i]
-       local Info=""
-       if Skill.Proficiency~=nil then
-        Info=":等级"..Skill.Level..",熟练度"..Skill.Proficiency
-       end
-       gcudLua.DisplayMessage(Skill.Name..Info,p)
+    local SkillList=Units[PlayerData[p].SelectedUnit].SkillList
+    if SkillList==nil then
+        gcudLua.DisplayMessage("此单位没有技能信息", p)
+    else
+        for i = 1, #SkillList do
+            local Info=""
+            if SkillList[i].Proficiency~=nil then
+                Info=":等级"..SkillList[i].Level..",熟练度"..SkillList[i].Proficiency
+            end
+            gcudLua.DisplayMessage(SkillList[i].Name..Info,p)
+        end
     end
 end

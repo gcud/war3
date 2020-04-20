@@ -27,7 +27,7 @@ function InitConstant()
         },
         --数量
         Number = {
-            MaxMonster=150,
+            MaxMonster=120,
             CreateMonster=30
         },
         --值
@@ -68,6 +68,8 @@ function InitConstant()
                 gcudLua.StringToInteger("N001"), 
                 --闪电蜥蜴
                 gcudLua.StringToInteger("N004"), 
+                --蜘蛛
+                gcudLua.StringToInteger("N005"), 
                 },
             },
         --单位
@@ -86,13 +88,19 @@ function InitConstant()
             Charm=gcudLua.StringToInteger("A000"),
             --闪电攻击
             LightningAttack=gcudLua.StringToInteger("A002"),
+            --毒
+            Poison=gcudLua.StringToInteger("A003"),
         },
         --物品类型
         ItemType = {
             --铁剑
             IronSword=gcudLua.StringToInteger("I000"),
             --优良铁剑
-            GoodIronSword=gcudLua.StringToInteger("I002"),
+            BetterIronSword=gcudLua.StringToInteger("I002"),
+            --上等铁剑
+            GoodIronSword=gcudLua.StringToInteger("I003"),
+            --精炼铁剑
+            ConciseIronSword=gcudLua.StringToInteger("I004"),
             --皮质头盔
             LeatherHelmet=gcudLua.StringToInteger("I001"),
             --生命护身符
