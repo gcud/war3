@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200419",
+        Version = "20200421",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -103,6 +103,10 @@ function InitConstant()
             ConciseIronSword=gcudLua.StringToInteger("I004"),
             --皮质头盔
             LeatherHelmet=gcudLua.StringToInteger("I001"),
+            --上等头盔
+            GoodLeatherHelmet=gcudLua.StringToInteger("I005"),
+            --皮泽洛头盔
+            PizaloLeatherHelmet=gcudLua.StringToInteger("I006"),
             --生命护身符
             LifeAmulet=gcudLua.StringToInteger("prvt"),
         },

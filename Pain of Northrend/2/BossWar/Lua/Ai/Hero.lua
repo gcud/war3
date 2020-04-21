@@ -58,8 +58,12 @@ function Ai_Hero_BuyWeapon(p,Shopper)
 end
 
 function Ai_Hero_BuyArmor(p,Shopper)
-    --皮质头盔
-    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LeatherHelmet)
+    --皮泽洛头盔
+    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.PizaloLeatherHelmet].Gold then
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.PizaloLeatherHelmet)
+    else
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.GoodLeatherHelmet)
+    end
 end
 
 function Ai_Hero_BuyGrocery(p,Shopper)

@@ -21,10 +21,12 @@ function BindExtraConstant()
         {Id=Constant.Skill.Poison,Name="毒",Level=1,Proficiency=0,Event={Add=Skill_Event_Add_Pison}},
     }
     --也没法获取物品的黄金消耗
-    ItemTypeData[Constant.ItemType.IronSword]={Gold=5}
-    ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=12}
-    ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=25}
-    ItemTypeData[Constant.ItemType.ConciseIronSword]={Gold=50}
-    ItemTypeData[Constant.ItemType.LeatherHelmet]={Gold=3}
+    ItemTypeData[Constant.ItemType.IronSword]={Gold=15}
+    ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}
+    ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=135}
+    ItemTypeData[Constant.ItemType.ConciseIronSword]={Gold=180}
+    ItemTypeData[Constant.ItemType.LeatherHelmet]={Gold=9}
+    ItemTypeData[Constant.ItemType.GoodLeatherHelmet]={Gold=54}
+    ItemTypeData[Constant.ItemType.PizaloLeatherHelmet]={Gold=81}
     ItemTypeData[Constant.ItemType.LifeAmulet]={Gold=150}
 end
