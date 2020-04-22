@@ -14,3 +14,32 @@ function Skill_Event_Add_Pison(u)
         end
     end)
 end
+
+--野兽幽魂
+function Skill_Event_Add_BeastGhost(u)
+    local RefreshTime=30
+    local Number=5
+    local p=GetOwningPlayer(u)
+    local ut=gcudLua.StringToInteger("osw2")
+    local AddArmorParameter,AddAttackParameter,AddHpParameter=1.5,5,100
+    gcudLua.TimerFunction(RefreshTime,function()
+        if Constant.GameOver then
+            DestroyTimer(GetExpiredTimer())
+        elseif gcudLua.UnitIsAlive(u) then
+            local X,Y=GetUnitX(u),GetUnitY(u)
+            local Level=GetUnitLevel(u)
+            local AddArmor,AddAttack,AddHp=AddArmorParameter*Level,AddAttackParameter*Level,AddHpParameter*Level
+            for i =1, Number do
+                if  GetPlayerUnitTypeCount(p,ut)<Number then
+                    local wolf=gcudLua.CreateUnitAtCoordinate(p,ut,X,Y)
+                    gcudLua.ModifyUnitArmor(wolf,AddArmor,true)
+                    gcudLua.ModifyUnitAttackPower(wolf,AddAttack,true)
+                    gcudLua.ModifyUnitMaxHP(wolf,AddHp,true)
+                    gcudLua.ModifyUnitHP(wolf,AddHp,true)
+                else
+                    break
+                end
+            end
+        end
+    end)
+end

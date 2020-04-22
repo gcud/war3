@@ -123,6 +123,11 @@
         "WEAPON_TYPE_WHOKNOWS",
         "BlzGetUnitZ",
         "ATTACK_TYPE_MELEE",
-        "DAMAGE_TYPE_POISON"
+        "DAMAGE_TYPE_POISON",
+        "BlzSetEventDamage",
+        "GetPlayerUnitTypeCount",
+        "ForGroup",
+        "GetEnumUnit",
+        "GroupEnumUnitsOfPlayer"
     ]
 }

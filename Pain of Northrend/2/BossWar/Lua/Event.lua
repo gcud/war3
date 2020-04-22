@@ -23,22 +23,29 @@ function InitDamageEvent()
         if DamageValue > 0 then
             local DamageTarget,DamageSource=BlzGetEventDamageTarget(),GetEventDamageSource()
             local DamageTargetPlayer,DamageSourcePlayer=GetTriggerPlayer(),GetOwningPlayer(DamageSource)
-            --攻击伤害
-            if gcudLua.IsAttackDamage() then
-                --魅惑
-                if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) then
-                   if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
-                        Skill_Effect_Charm(DamageSource, DamageTarget)
-                    end
-                --闪电攻击
-                elseif gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.LightningAttack) then
-                    if  IsUnitEnemy(DamageSource,DamageTargetPlayer)then
-                        Skill_Effect_LightningAttack(DamageSource,DamageSourcePlayer,DamageTarget,DamageValue)
-                    end
-                --毒
-                elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Poison)then
-                    if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].Skill_Pison_PisonPoint>0  and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
-                        Skill_Effect_Pison(DamageSource, DamageTarget)
+            --物理伤害
+            if gcudLua.IsPhysicalDamage() then
+                --磐石
+                if gcudLua.UnitHaveSkill(DamageTarget, Constant.Skill.Rock) then
+                    Skill_Effect_Rock(DamageTarget,DamageValue)
+                end
+                --攻击伤害
+                if gcudLua.IsAttackDamage() then
+                    --魅惑
+                    if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) then
+                    if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                            Skill_Effect_Charm(DamageSource, DamageTarget)
+                        end
+                    --闪电攻击
+                    elseif gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.LightningAttack) then
+                        if  IsUnitEnemy(DamageSource,DamageTargetPlayer)then
+                            Skill_Effect_LightningAttack(DamageSource,DamageSourcePlayer,DamageTarget,DamageValue)
+                        end
+                    --毒
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Poison)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].Skill_Pison_PisonPoint>0  and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                            Skill_Effect_Pison(DamageSource, DamageTarget)
+                        end
                     end
                 end
             end

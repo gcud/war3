@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200421",
+        Version = "20200422",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -22,12 +22,12 @@ function InitConstant()
         --时间
         Time = {
             CreateMonsterInterval=30,
-            MonsterParamterIncreaseInterval=600
-            
+            MonsterParamterIncreaseInterval=600,
+            AiUnitAttackIneterval=10
         },
         --数量
         Number = {
-            MaxMonster=120,
+            MaxMonster=100,
             CreateMonster=30
         },
         --值
@@ -70,6 +70,10 @@ function InitConstant()
                 gcudLua.StringToInteger("N004"), 
                 --蜘蛛
                 gcudLua.StringToInteger("N005"), 
+                --泥潭傀儡
+                gcudLua.StringToInteger("N006"), 
+                --恐惧魔王
+                gcudLua.StringToInteger("Ofar"), 
                 },
             },
         --单位
@@ -90,6 +94,10 @@ function InitConstant()
             LightningAttack=gcudLua.StringToInteger("A002"),
             --毒
             Poison=gcudLua.StringToInteger("A003"),
+            --磐石
+            Rock=gcudLua.StringToInteger("A004"),
+            --野兽幽魂
+            BeastGhost=gcudLua.StringToInteger("A005"),
         },
         --物品类型
         ItemType = {

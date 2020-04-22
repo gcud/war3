@@ -74,3 +74,14 @@ function Skill_Effect_Pison(u,Target)
         end
     end)
 end
+
+--磐石
+function Skill_Effect_Rock(u,DamageValue)
+    local Rate=65
+    local DamageReduceParamter=1
+    local DamageReduce=GetUpgradeAbilityLevel(u,Constant.Skill.Rock)*DamageReduceParamter
+    if GetRandomInt(1,100)<=Rate then
+        BlzSetEventDamage(DamageValue-DamageReduce)
+        IncreaseAbilityProficiency(u,Constant.Skill.Rock)
+    end
+end
