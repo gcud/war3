@@ -46,6 +46,11 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].Skill_Pison_PisonPoint>0  and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
                             Skill_Effect_Pison(DamageSource, DamageTarget)
                         end
+                    --震击
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Shock)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer)then
+                            Skill_Effect_Shock(DamageSource)
+                        end
                     end
                 end
             end
@@ -116,7 +121,12 @@ function InitSpellEvent()
     local t = CreateTrigger()
     RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_SPELL_EFFECT)
     TriggerAddAction(t, function()
-        --SkillEffect(GetSpellAbilityId(), GetSpellAbilityUnit(),GetTriggerPlayer())
+        local Speller,Target=GetSpellAbilityUnit(),GetSpellTargetUnit()
+        local AbilityId=GetSpellAbilityId()
+        --魔法禁用
+        if gcudLua.UnitHaveSkill(Target,Constant.Skill.BanMagic) and IsUnitEnemy(Target,GetOwningPlayer(Speller)) then
+            Skill_Effect_BanMagic(Target,Speller,BlzGetAbilityManaCost(AbilityId,GetUnitAbilityLevel(Speller,AbilityId)-1))
+        end
     end)
 end
 

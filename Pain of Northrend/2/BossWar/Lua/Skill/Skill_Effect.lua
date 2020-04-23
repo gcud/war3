@@ -85,3 +85,32 @@ function Skill_Effect_Rock(u,DamageValue)
         IncreaseAbilityProficiency(u,Constant.Skill.Rock)
     end
 end
+
+--魔法禁用
+function Skill_Effect_BanMagic(u,Target,ManaCost)
+    local DamageParameter=10
+    local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.BanMagic)*DamageParameter+ManaCost
+    UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_MAGIC,WEAPON_TYPE_WHOKNOWS)
+    IncreaseAbilityProficiency(u,Constant.Skill.BanMagic)
+end
+
+--震击
+function Skill_Effect_Shock(u)
+    local DamageParameter,Rate,Radius=5,15,250
+    local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Shock)*DamageParameter
+    if GetRandomInt(1,100)<=Rate then
+        local X,Y=GetUnitX(u),GetUnitY(u)
+        DestroyEffect(AddSpecialEffect("Abilities/Spells/Human/Thunderclap/ThunderClapCaster.mdl",X,Y))
+        local p=GetOwningPlayer(u)
+        local g=CreateGroup()
+        GroupEnumUnitsInRange(g,X,Y,Radius,nil)
+        ForGroup(g,function ()
+            local Target=GetEnumUnit()
+            if IsUnitEnemy(Target,p) and gcudLua.UnitIsAlive(Target) and IsUnitType(Target,UNIT_TYPE_GROUND) then
+                UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL,WEAPON_TYPE_WHOKNOWS)
+            end
+        end)
+        DestroyGroup(g)
+        IncreaseAbilityProficiency(u,Constant.Skill.Shock)
+    end
+end

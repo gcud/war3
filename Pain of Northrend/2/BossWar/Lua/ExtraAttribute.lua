@@ -26,6 +26,12 @@ function BindExtraConstant()
     Constant.HeroSkillLists[gcudLua.StringToInteger("Ofar")]={
         {Id=Constant.Skill.BeastGhost,Name="野兽幽魂",Event={Add=Skill_Event_Add_BeastGhost}},
     }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("H001")]={
+        {Id=Constant.Skill.BanMagic,Name="魔法禁用",Level=1,Proficiency=0},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("Hmkg")]={
+        {Id=Constant.Skill.Shock,Name="震击",Level=1,Proficiency=0},
+    }
     --也没法获取物品的黄金消耗
     ItemTypeData[Constant.ItemType.IronSword]={Gold=15}
     ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}

@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200422",
+        Version = "20200423",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -64,7 +64,7 @@ function InitConstant()
             ReviveStone=gcudLua.StringToInteger("nbsw"),
             --英雄列表
             HeroList = {
-                --女妖精
+                --苦难女王
                 gcudLua.StringToInteger("N001"), 
                 --闪电蜥蜴
                 gcudLua.StringToInteger("N004"), 
@@ -72,8 +72,12 @@ function InitConstant()
                 gcudLua.StringToInteger("N005"), 
                 --泥潭傀儡
                 gcudLua.StringToInteger("N006"), 
-                --恐惧魔王
+                --先知
                 gcudLua.StringToInteger("Ofar"), 
+                --船长
+                gcudLua.StringToInteger("H001"), 
+                --山丘之王
+                gcudLua.StringToInteger("Hmkg"), 
                 },
             },
         --单位
@@ -98,6 +102,10 @@ function InitConstant()
             Rock=gcudLua.StringToInteger("A004"),
             --野兽幽魂
             BeastGhost=gcudLua.StringToInteger("A005"),
+            --魔法禁用
+            BanMagic=gcudLua.StringToInteger("A006"),
+            --震击
+            Shock=gcudLua.StringToInteger("A007"),
         },
         --物品类型
         ItemType = {
