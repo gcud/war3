@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200423",
+        Version = "20200424",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -49,6 +49,7 @@ function InitConstant()
             SafeDistance=400,
             AiHeroFleeHpMin=100,
             AiHeroRecoverHpRate=0.8,
+            AiHeroFleeMinLevel=25
         },
         --单位类型
         UnitType = {
@@ -68,16 +69,18 @@ function InitConstant()
                 gcudLua.StringToInteger("N001"), 
                 --闪电蜥蜴
                 gcudLua.StringToInteger("N004"), 
-                --蜘蛛
+                --血浴之母
                 gcudLua.StringToInteger("N005"), 
-                --泥潭傀儡
-                gcudLua.StringToInteger("N006"), 
+                --岩石傀儡
+                gcudLua.StringToInteger("N008"), 
                 --先知
                 gcudLua.StringToInteger("Ofar"), 
                 --船长
                 gcudLua.StringToInteger("H001"), 
                 --山丘之王
                 gcudLua.StringToInteger("Hmkg"), 
+                --熊怪乌萨长者
+                gcudLua.StringToInteger("N007"), 
                 },
             },
         --单位
@@ -106,6 +109,8 @@ function InitConstant()
             BanMagic=gcudLua.StringToInteger("A006"),
             --震击
             Shock=gcudLua.StringToInteger("A007"),
+            --生命恢复
+            LifeRecovery=gcudLua.StringToInteger("A008"),
         },
         --物品类型
         ItemType = {

@@ -43,3 +43,33 @@ function Skill_Event_Add_BeastGhost(u)
         end
     end)
 end
+
+--生命恢复
+function Skill_Event_Add_LifeRecovery(u)
+    local Ineterval,HpRate,Range,Duration,RecoveryHpParameter=5,0.5,900,15,1
+    local p=GetOwningPlayer(u)
+    gcudLua.TimerFunction(Ineterval,function()
+        if Constant.GameOver then
+            DestroyTimer(GetExpiredTimer())
+        elseif gcudLua.UnitIsAlive(u) then
+            local RecoveryHp=GetUpgradeAbilityLevel(u,Constant.Skill.LifeRecovery)*RecoveryHpParameter
+            gcudLua.EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u),GetUnitY(u),Range,function(Target)
+                if gcudLua.GetUnitHPRate(Target)<HpRate and gcudLua.gcudFilter({"AllianceUnit","AliveUnit","NotMechanical"},{MainUnit=Target,MainPlayer=p}) then
+                    local NowTime=0
+                    local Effect=AddSpecialEffectTarget("Abilities/Spells/NightElf/Rejuvenation/RejuvenationTarget.mdl", Target, "origin")
+                    gcudLua.TimerFunction(1,function()
+                        if Constant.GameOver or NowTime>=Duration or not gcudLua.UnitIsAlive(Target) then
+                            DestroyEffect(Effect)
+                            DestroyTimer(GetExpiredTimer())
+                        else
+                            NowTime=NowTime+1
+                            gcudLua.ModifyUnitHP(Target,RecoveryHp,true)
+                        end
+                    end)
+                    IncreaseAbilityProficiency(u,Constant.Skill.LifeRecovery)
+                    return true
+                end
+            end)
+        end
+    end)
+end

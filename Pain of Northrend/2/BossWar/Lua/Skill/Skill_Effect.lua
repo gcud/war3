@@ -1,7 +1,7 @@
 --魅惑
 function Skill_Effect_Charm(u,target)
-    local Parameter=1
-    local Probability=GetUpgradeAbilityLevel(u,Constant.Skill.Charm)*Parameter
+    local Parameter,BaseProbability=1,5
+    local Probability=GetUpgradeAbilityLevel(u,Constant.Skill.Charm)*Parameter+BaseProbability
     if GetRandomInt(1,100)<=Probability then
         DestroyEffect(AddSpecialEffectTarget("Abilities/Spells/Other/Charm/CharmTarget.mdl", target, "origin"))
         SetUnitOwner(target,GetOwningPlayer(u),true)

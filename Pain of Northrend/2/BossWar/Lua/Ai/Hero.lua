@@ -12,7 +12,7 @@ function Ai_Hero_TimerAction(p)
                 local NowOrder=GetUnitCurrentOrder(NowHero[p].Unit)
                 local HpRate=gcudLua.GetUnitHPRate(NowHero[p].Unit)
                 --逃跑
-                if HpRate<Constant.Value.AiHeroFleeHpRate or gcudLua.GetUnitHP(NowHero[p].Unit)<Constant.Value.AiHeroFleeHpMin then
+                if (HpRate<Constant.Value.AiHeroFleeHpRate or gcudLua.GetUnitHP(NowHero[p].Unit)<Constant.Value.AiHeroFleeHpMin) and GetUnitLevel(NowHero[p].Unit)>=Constant.Value.AiHeroFleeMinLevel then
                     if  NowOrder~=gcudLua.CommandIds.Move and not IsUnitInRange(NowHero[p].Unit,Constant.Unit.ReviveStone,Constant.Value.SafeDistance) then
                         IssuePointOrder(NowHero[p].Unit,"move",GetRandomReal(Constant.Coordinate.Revive[1]-450,Constant.Coordinate.Revive[1]+450),GetRandomReal(Constant.Coordinate.Revive[2]-450,Constant.Coordinate.Revive[2]+450))
                     end
