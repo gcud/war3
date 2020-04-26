@@ -137,6 +137,7 @@
         "GetUnitAbilityLevel",
         "AddSpecialEffect",
         "UNIT_TYPE_GROUND",
-        "DAMAGE_TYPE_NORMAL"
+        "DAMAGE_TYPE_NORMAL",
+        "BlzGetEventDamageType"
     ]
 }

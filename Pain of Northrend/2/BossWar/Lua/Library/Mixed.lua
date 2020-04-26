@@ -69,3 +69,31 @@ function AddSpecialAbility(u,Skill)
         Skill.Event.Add(u)
     end
 end
+
+--增强Boss
+function BossStrong(Boss, DiedHeroLevel)
+    local AddHpParameter,AddAttackPowerParameter,AddArmorParameter,AddHpRecoveryParameter=8,0.3,0.1,0.1
+    local AddHp,AddAttackPower,AddArmor,AddHpRecovery=AddHpParameter*DiedHeroLevel,AddAttackPowerParameter*DiedHeroLevel,AddArmorParameter*DiedHeroLevel,AddHpRecoveryParameter*DiedHeroLevel
+    gcudLua.ModifyUnitMaxHP(Boss,AddHp,true)
+    gcudLua.ModifyUnitHP(Boss,AddHp,true)
+    UnitAttribute(Boss,Constant.ATTRIBUTE_ATTACK_POWER,AddAttackPower,true)
+    UnitAttribute(Boss,Constant.ATTRIBUTE_ARMOR,AddArmor,true)
+    gcudLua.ModifyUnitHpRecovery(Boss,Constant.ATTRIBUTE_HP_RECOVERY,AddHpRecovery,true)
+end
+
+--单位属性
+function UnitAttribute(u,AttributeType,Value,IsAdd)
+    local a=BlzGetUnitAbility(u,AttributeType.Id)
+    local OldValue=BlzGetAbilityIntegerLevelField(a,AttributeType.Field,0)+Units[u].Attribute[AttributeType.CacheField]
+    if IsAdd then
+        OldValue=OldValue+Value
+    else
+        OldValue=OldValue-Value
+    end
+    --缓存值处理
+    local RealValue=math.floor(OldValue)
+    Units[u].Attribute[AttributeType.CacheField]=OldValue-RealValue
+    BlzSetAbilityIntegerLevelField(a,AttributeType.Field,0,RealValue)
+    IncUnitAbilityLevel(u,AttributeType.Id)
+    DecUnitAbilityLevel(u,AttributeType.Id)
+end

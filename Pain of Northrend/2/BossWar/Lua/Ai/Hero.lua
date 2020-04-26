@@ -66,7 +66,7 @@ function Ai_Hero_BuyArmor(p,Shopper)
     end
 end
 
-function Ai_Hero_BuyGrocery(p,Shopper)
+function Ai_Hero_BuyGrocery(p,Shopper)    
     --生命护身符
     IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LifeAmulet)
 end

@@ -1,8 +1,8 @@
 --毒
 function Skill_Event_Add_Pison(u)
-    local LimitParameter=10
+    local LimitParameter=5
     Units[u].Skill_Pison_PisonPoint=0
-    gcudLua.TimerFunction(1,function()
+    gcudLua.TimerFunction(3,function()
         if Constant.GameOver then
             DestroyTimer(GetExpiredTimer())
         elseif gcudLua.UnitIsAlive(u) then
@@ -21,14 +21,14 @@ function Skill_Event_Add_BeastGhost(u)
     local Number=5
     local p=GetOwningPlayer(u)
     local ut=gcudLua.StringToInteger("osw2")
-    local AddArmorParameter,AddAttackParameter,AddHpParameter=1.5,5,100
+    local AddArmorParameter,AddAttackParameter,AddHpParameter,AddHPRecoveryParameter=1,5,50,0.5
     gcudLua.TimerFunction(RefreshTime,function()
         if Constant.GameOver then
             DestroyTimer(GetExpiredTimer())
         elseif gcudLua.UnitIsAlive(u) then
             local X,Y=GetUnitX(u),GetUnitY(u)
             local Level=GetUnitLevel(u)
-            local AddArmor,AddAttack,AddHp=AddArmorParameter*Level,AddAttackParameter*Level,AddHpParameter*Level
+            local AddArmor,AddAttack,AddHp,AddHPRecovery=AddArmorParameter*Level,AddAttackParameter*Level,AddHpParameter*Level,AddHPRecoveryParameter*Level
             for i =1, Number do
                 if  GetPlayerUnitTypeCount(p,ut)<Number then
                     local wolf=gcudLua.CreateUnitAtCoordinate(p,ut,X,Y)
@@ -36,6 +36,7 @@ function Skill_Event_Add_BeastGhost(u)
                     gcudLua.ModifyUnitAttackPower(wolf,AddAttack,true)
                     gcudLua.ModifyUnitMaxHP(wolf,AddHp,true)
                     gcudLua.ModifyUnitHP(wolf,AddHp,true)
+                    gcudLua.ModifyUnitHpRecovery(wolf,AddHPRecovery,true)
                 else
                     break
                 end

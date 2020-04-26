@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200424",
+        Version = "20200426",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -51,38 +51,6 @@ function InitConstant()
             AiHeroRecoverHpRate=0.8,
             AiHeroFleeMinLevel=25
         },
-        --单位类型
-        UnitType = {
-            --施法单位
-            Speller = gcudLua.StringToInteger("e000"),
-            --武器商人
-            WeaponShoper=gcudLua.StringToInteger("h000"),
-            --防具商人
-            ArmorShoper=gcudLua.StringToInteger("n002"),
-            --杂货商人
-            GroceryShoper=gcudLua.StringToInteger("n003"),
-            --复活石
-            ReviveStone=gcudLua.StringToInteger("nbsw"),
-            --英雄列表
-            HeroList = {
-                --苦难女王
-                gcudLua.StringToInteger("N001"), 
-                --闪电蜥蜴
-                gcudLua.StringToInteger("N004"), 
-                --血浴之母
-                gcudLua.StringToInteger("N005"), 
-                --岩石傀儡
-                gcudLua.StringToInteger("N008"), 
-                --先知
-                gcudLua.StringToInteger("Ofar"), 
-                --船长
-                gcudLua.StringToInteger("H001"), 
-                --山丘之王
-                gcudLua.StringToInteger("Hmkg"), 
-                --熊怪乌萨长者
-                gcudLua.StringToInteger("N007"), 
-                },
-            },
         --单位
         Unit = {
             Speller = nil,
@@ -111,6 +79,8 @@ function InitConstant()
             Shock=gcudLua.StringToInteger("A007"),
             --生命恢复
             LifeRecovery=gcudLua.StringToInteger("A008"),
+            --撕裂之爪
+            TearingClaw=gcudLua.StringToInteger("A009"),
         },
         --物品类型
         ItemType = {
@@ -128,6 +98,8 @@ function InitConstant()
             GoodLeatherHelmet=gcudLua.StringToInteger("I005"),
             --皮泽洛头盔
             PizaloLeatherHelmet=gcudLua.StringToInteger("I006"),
+            --加速手套
+            AccelerationGloves=gcudLua.StringToInteger("gcel"),
             --生命护身符
             LifeAmulet=gcudLua.StringToInteger("prvt"),
         },
@@ -137,6 +109,9 @@ function InitConstant()
         AiArea=nil,
         --英雄技能列表
         HeroSkillLists={},
+        --属性专用
+        ATTRIBUTE_ARMOR={Id=gcudLua.StringToInteger("A00A"),Field=ABILITY_ILF_DEFENSE_BONUS_IDEF,Type="Integer",CacheField="Armor"},
+        ATTRIBUTE_ATTACK_POWER={Id=gcudLua.StringToInteger("A00C"),Field=ABILITY_ILF_ATTACK_BONUS,Type="Integer",CacheField="AttackPower"},
     }
     --所有单位
     Units = {}
@@ -148,5 +123,41 @@ function InitConstant()
     NowHero = {}
     --物品类型数据
     ItemTypeData={}
+    --单位类型数据
+    UnitType = {
+        --施法单位
+        Speller = gcudLua.StringToInteger("e000"),
+        --武器商人
+        WeaponShoper=gcudLua.StringToInteger("h000"),
+        --防具商人
+        ArmorShoper=gcudLua.StringToInteger("n002"),
+        --杂货商人
+        GroceryShoper=gcudLua.StringToInteger("n003"),
+        --复活石
+        ReviveStone=gcudLua.StringToInteger("nbsw"),
+        --英雄列表
+        HeroList = {
+            --苦难女王
+            gcudLua.StringToInteger("N001"), 
+            --闪电蜥蜴
+            gcudLua.StringToInteger("N004"), 
+            --血浴之母
+            gcudLua.StringToInteger("N005"), 
+            --岩石傀儡
+            gcudLua.StringToInteger("N008"), 
+            --先知
+            gcudLua.StringToInteger("Ofar"), 
+            --船长
+            gcudLua.StringToInteger("H001"), 
+            --山丘之王
+            gcudLua.StringToInteger("Hmkg"), 
+            --熊怪乌萨长者
+            gcudLua.StringToInteger("N007"), 
+            },
+        --Boss列表
+        BossList={
+            {Id=gcudLua.StringToInteger("n000"),Resistance={Poison=0.65}},
+        }
+    }
     BindExtraConstant()
 end

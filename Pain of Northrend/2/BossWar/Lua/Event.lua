@@ -5,11 +5,11 @@ function InitEvent()
     InitEnterMapEvent()
     InitSpellEvent()
     InitChatEvent()
-    InitAttackEvent()
-    InitLevelUpEvent()
+    --InitAttackEvent()
+    --InitLevelUpEvent()
     InitGetItemEvent()
     InitSelectUnitEvent()
-    InitUseItemEvent()
+    --InitUseItemEvent()
 end
 
 -- 伤害事件
@@ -23,6 +23,14 @@ function InitDamageEvent()
         if DamageValue > 0 then
             local DamageTarget,DamageSource=BlzGetEventDamageTarget(),GetEventDamageSource()
             local DamageTargetPlayer,DamageSourcePlayer=GetTriggerPlayer(),GetOwningPlayer(DamageSource)
+            --伤害抗性处理,目前只处理Boss
+            if IsUnitType(DamageTarget,UNIT_TYPE_GIANT) then
+                --目前只处理毒伤害
+                if BlzGetEventDamageType()==DAMAGE_TYPE_POISON and Units[DamageTarget].Resistance~=nil and Units[DamageTarget].Resistance.Poison>0 then
+                    DamageValue=DamageValue*(1-Units[DamageTarget].Resistance.Poison)
+                    BlzSetEventDamage(DamageValue)
+                end
+            end
             --物理伤害
             if gcudLua.IsPhysicalDamage() then
                 --磐石
@@ -51,6 +59,11 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer)then
                             Skill_Effect_Shock(DamageSource)
                         end
+                    --撕裂之爪
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.TearingClaw)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer)then
+                            Skill_Effect_TearingClam(DamageSource,DamageTarget)
+                        end
                     end
                 end
             end
@@ -73,6 +86,9 @@ function InitDieEvent()
         if (gcudLua.IsHero(Dead)) then
             --Action_KillTip(Dead, Killer, DeadPlayer, KillerPlayer)
             Action_HeroTimerRevive(Dead, DeadPlayer)
+            if IsUnitType(Killer,UNIT_TYPE_GIANT) then
+                BossStrong(Killer,GetUnitLevel(Dead))
+            end
         else
             ClearUnitData(Dead)
         end
@@ -88,16 +104,30 @@ function InitEnterMapEvent()
     TriggerRegisterEnterRegion(t, TemporaryRegion, nil)
     TriggerAddAction(t, function()
         local u = GetEnteringUnit()
+        --添加单位属性使用的技能
+        UnitAddAbility(u,Constant.ATTRIBUTE_ARMOR.Id)
+        UnitAddAbility(u,Constant.ATTRIBUTE_ATTACK_POWER.Id)
         -- 绑定单位数据
         Units[u] = {
-            EvasionPercent = 0,
-            VampiricPercent = 0,
-            PhysicalDamagePercent = 0,
-            PhysicalDamageValue = 0,
-            MagicDamagePercent = 0,
-            MagicDamageValue = 0,
-            Strike={Rate=0,Random=0},
+            --EvasionPercent = 0,
+            --VampiricPercent = 0,
+            --PhysicalDamagePercent = 0,
+            --PhysicalDamageValue = 0,
+            --MagicDamagePercent = 0,
+            --MagicDamageValue = 0,
+            --Strike={Rate=0,Random=0},
+            Attribute={Armor=0,AttackPower=0}
         }
+        --设置伤害抗性,然而只有Boss才有
+        if IsUnitType(u,UNIT_TYPE_GIANT) then
+            local id=GetUnitTypeId(u)
+            for i = 1, #UnitType.BossList do
+                if UnitType.BossList[i].Id==id then
+                    Units[u].Resistance=UnitType.BossList[i].Resistance
+                    break
+                end
+            end
+        end
         if (gcudLua.IsHero(u)) then
             local p = GetOwningPlayer(u)
             NowHero[p].Unit=u
@@ -151,8 +181,8 @@ function InitAttackEvent()
     local t = CreateTrigger()
     RegisterAnyUnitEvent(t, EVENT_PLAYER_UNIT_ATTACKED)
     TriggerAddAction(t, function()
-        local u, Attacker = GetTriggerUnit(), GetAttacker()
-        local p = GetTriggerPlayer()
+        -- local u, Attacker = GetTriggerUnit(), GetAttacker()
+        -- local p = GetTriggerPlayer()
         -- ToDo:技能效果
     end)
 end
@@ -163,18 +193,8 @@ function InitLevelUpEvent()
     local t = CreateTrigger()
     RegisterAnyUnitEvent(t, EVENT_PLAYER_HERO_LEVEL)
     TriggerAddAction(t, function()
-        local Hero = GetTriggerUnit()
-        local p = GetTriggerPlayer()
-        local NowLevel = GetUnitLevel(Hero)
-        local UpLevel = NowHero[p].Level - NowLevel
-        NowHero[p].Level = NowLevel
-        -- Ai属性补偿
-        if (gcudLua.InOrderedTable(p, gcudLua.AiPlayers)) then
-            gcudLua.ModifyHeroStrength(Hero, Constant.Value.AiAttributeCompensate, true)
-            gcudLua.ModifyHeroAgile(Hero, Constant.Value.AiAttributeCompensate, true)
-            gcudLua.ModifyHeroIntelligence(Hero, Constant.Value.AiAttributeCompensate,
-                                   true)
-        end
+        -- local Hero = GetTriggerUnit()
+        -- local p = GetTriggerPlayer()
     end)
 end
 

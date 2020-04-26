@@ -37,9 +37,9 @@ end
 --初始化玩家英雄
 function InitPlayerHero()
     InitPlayerHero=nil
-    local Max=#Constant.UnitType.HeroList
+    local Max=#UnitType.HeroList
     for i = 1, #gcudLua.Players do
-        gcudLua.CreateUnitAtCoordinate(gcudLua.Players[i], Constant.UnitType.HeroList[GetRandomInt(1,Max)],Constant.Coordinate.Revive[1] ,Constant.Coordinate.Revive[2])
+        gcudLua.CreateUnitAtCoordinate(gcudLua.Players[i], UnitType.HeroList[GetRandomInt(1,Max)],Constant.Coordinate.Revive[1] ,Constant.Coordinate.Revive[2])
     end
 end
 

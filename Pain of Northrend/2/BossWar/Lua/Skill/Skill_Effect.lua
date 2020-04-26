@@ -42,7 +42,8 @@ function Skill_Effect_LightningAttack(DamageSource,p,BaseTarget,Damage)
             else
                 NewX,NewY= GetUnitX(NewTarget) ,GetUnitY(NewTarget)
                 UnitDamageTarget(DamageSource,NewTarget, Damage, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_LIGHTNING, WEAPON_TYPE_WHOKNOWS)
-                local Lightning=AddLightningEx("CLSB", false, StartX, StartY,BlzGetUnitZ(BaseTarget),NewX,NewY,BlzGetUnitZ(NewTarget))
+                local Height=GetUnitFlyHeight(BaseTarget)
+                local Lightning=AddLightningEx("CLSB", false, StartX, StartY,Height,NewX,NewY,Height)
                 gcudLua.TimerFunctionOnce(0.5,function ()
                     DestroyLightning(Lightning)
                 end)
@@ -61,6 +62,7 @@ function Skill_Effect_Pison(u,Target)
     local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*DamageParameter
     local TimeParameter=1
     local Time,NowTime=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*TimeParameter,0
+    Units[u].Skill_Pison_PisonPoint=Units[u].Skill_Pison_PisonPoint-1
     IncreaseAbilityProficiency(u,Constant.Skill.Poison)
     --绑定特效到单位
     local Effect=AddSpecialEffectTarget("Abilities/Weapons/PoisonSting/PoisonStingTarget.mdl", Target, "origin")
@@ -82,7 +84,9 @@ function Skill_Effect_Rock(u,DamageValue)
     local DamageReduce=GetUpgradeAbilityLevel(u,Constant.Skill.Rock)*DamageReduceParamter
     if GetRandomInt(1,100)<=Rate then
         BlzSetEventDamage(DamageValue-DamageReduce)
-        IncreaseAbilityProficiency(u,Constant.Skill.Rock)
+        if DamageValue>DamageReduce then
+            IncreaseAbilityProficiency(u,Constant.Skill.Rock)
+        end
     end
 end
 
@@ -96,21 +100,35 @@ end
 
 --震击
 function Skill_Effect_Shock(u)
-    local DamageParameter,Rate,Radius=5,15,250
+    local DamageParameter,Rate,Radius=10,15,300
     local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Shock)*DamageParameter
     if GetRandomInt(1,100)<=Rate then
         local X,Y=GetUnitX(u),GetUnitY(u)
-        DestroyEffect(AddSpecialEffect("Abilities/Spells/Human/Thunderclap/ThunderClapCaster.mdl",X,Y))
         local p=GetOwningPlayer(u)
-        local g=CreateGroup()
-        GroupEnumUnitsInRange(g,X,Y,Radius,nil)
-        ForGroup(g,function ()
-            local Target=GetEnumUnit()
+        DestroyEffect(AddSpecialEffect("Abilities/Spells/Human/Thunderclap/ThunderClapCaster.mdl",X,Y))
+        gcudLua.EnumUnitsInRangeDoActionAtCoordinate(X,Y,Radius,function (Target)
             if IsUnitEnemy(Target,p) and gcudLua.UnitIsAlive(Target) and IsUnitType(Target,UNIT_TYPE_GROUND) then
                 UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL,WEAPON_TYPE_WHOKNOWS)
             end
         end)
-        DestroyGroup(g)
         IncreaseAbilityProficiency(u,Constant.Skill.Shock)
     end
+end
+
+--撕裂之爪,攻击时减少护甲,持续物理伤害
+function Skill_Effect_TearingClam(u,Target)
+    local ReduceArmor,Damage,Duration,NowTime=1.5,45,30,0
+    local Effect=AddSpecialEffectTarget("Objects/Spawnmodels/Human/HumanBlood/BloodElfSpellThiefBlood.mdl", Target, "origin")
+    gcudLua.ModifyUnitArmor(Target,ReduceArmor,false)
+    gcudLua.TimerFunction(1,function ()
+        if Constant.GameOver or not gcudLua.UnitIsAlive(Target) or NowTime >=Duration then
+            gcudLua.ModifyUnitArmor(Target,ReduceArmor,true)
+            DestroyEffect(Effect)
+            DestroyTimer(GetExpiredTimer())
+        else
+            --法术攻击,破坏伤害(流血)
+            UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_DEMOLITION,WEAPON_TYPE_WHOKNOWS)
+            NowTime=NowTime+1
+        end
+    end)
 end

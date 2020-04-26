@@ -13,7 +13,8 @@ end
 
 -- 初始化Boss
 function InitBoss()
-  gcudLua.CreateUnitAtCoordinate(gcudLua.MonsterPlayer,gcudLua.StringToInteger("n000"),Constant.Coordinate.Boss[1],Constant.Coordinate.Boss[2])
+--目前只创建第一个
+  gcudLua.CreateUnitAtCoordinate(gcudLua.MonsterPlayer,UnitType.BossList[1].Id,Constant.Coordinate.Boss[1],Constant.Coordinate.Boss[2])
 end
 
 -- 初始化基础怪物
