@@ -138,6 +138,15 @@
         "AddSpecialEffect",
         "UNIT_TYPE_GROUND",
         "DAMAGE_TYPE_NORMAL",
-        "BlzGetEventDamageType"
+        "BlzGetEventDamageType",
+        "BlzGetUnitArmor",
+        "BlzGetAbilityIntegerLevelField",
+        "IncUnitAbilityLevel",
+        "BlzSetAbilityIntegerLevelField",
+        "DecUnitAbilityLevel",
+        "DAMAGE_TYPE_DEMOLITION",
+        "GetUnitFlyHeight",
+        "ABILITY_ILF_DEFENSE_BONUS_IDEF",
+        "ABILITY_ILF_ATTACK_BONUS"
     ]
 }

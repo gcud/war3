@@ -36,8 +36,12 @@ function Ai_Hero_BindInRange(h,p)
     TriggerAddAction(t,function ()
         local u=GetTriggerUnit()
         --商人
-        if gcudLua.UnitHaveSkill(u, Constant.Skill.BuyItem) and gcudLua.InventoryAddItemAble(h) then
-            Ai_Hero_BuyItem(p,u)
+        if gcudLua.UnitHaveSkill(u, Constant.Skill.BuyItem)then
+             if gcudLua.InventoryAddItemAble(h) then
+                Ai_Hero_BuyItem(p,u)
+             else
+                Ai_Hero_Inventory_Full_Action(h,p)
+             end
         end
     end)
 end
@@ -69,4 +73,23 @@ end
 function Ai_Hero_BuyGrocery(p,Shopper)    
     --生命护身符
     IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LifeAmulet)
+end
+
+function Ai_Hero_Inventory_Full_Action(h,p)
+    --卖护甲物品
+    if GetUnitArmorDamageRate(h)>Constant.Value.AiArmorRateCheck then
+        for i = 0, 5 do
+            local Item=UnitItemInSlot(h,i)
+            if Item~=nil then
+                local ItemType=GetItemTypeId(Item)
+                if ItemType==Constant.ItemType.GoodLeatherHelmet then
+                    AiSellItem(i,ItemType,p)
+                    break
+                elseif ItemType==Constant.ItemType.PizaloLeatherHelmet then
+                    AiSellItem(i,ItemType,p)
+                    break
+                end
+            end
+        end
+    end
 end

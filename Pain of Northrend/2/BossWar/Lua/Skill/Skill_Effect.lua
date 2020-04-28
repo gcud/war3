@@ -132,3 +132,26 @@ function Skill_Effect_TearingClam(u,Target)
         end
     end)
 end
+
+--魔法洪流
+function Skill_Effect_MagicWave(u,p,X,Y)
+    local CoolDown,Radius,DamageParameter,ManaMin,ManaRate,EffectNumber=15,500,5,100,0.35,50
+    local NowMana=gcudLua.GetUnitMagical(u)
+    if NowMana>ManaMin then
+        local UseMana=NowMana*ManaRate
+        local Damage=UseMana*DamageParameter
+        for i = 1, EffectNumber do
+            DestroyEffect(AddSpecialEffect("Abilities/Spells/Other/CrushingWave/CrushingWaveDamage.mdl",GetRandomReal(X-Radius,X+Radius),GetRandomReal(Y-Radius,Y+Radius)))
+        end
+        gcudLua.ModifyUnitMagical(u,UseMana,false)
+        gcudLua.EnumUnitsInRangeDoActionAtCoordinate(X,Y,Radius,function (RangeUnit)
+            if gcudLua.gcudFilter({"EnemyUnit","AliveUnit","NotMagicImmune"},{MainUnit=RangeUnit,MainPlayer=p}) then
+                UnitDamageTarget(u,RangeUnit,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_MAGIC,WEAPON_TYPE_WHOKNOWS)
+            end
+        end)
+        Units[u].MagicWave=false
+        gcudLua.TimerFunctionOnce(CoolDown,function ()
+        Units[u].MagicWave=true
+        end)
+    end
+end

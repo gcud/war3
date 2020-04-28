@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200426",
+        Version = "20200427",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -49,7 +49,8 @@ function InitConstant()
             SafeDistance=400,
             AiHeroFleeHpMin=100,
             AiHeroRecoverHpRate=0.8,
-            AiHeroFleeMinLevel=25
+            AiHeroFleeMinLevel=25,
+            AiArmorRateCheck=0.8
         },
         --单位
         Unit = {
@@ -81,6 +82,8 @@ function InitConstant()
             LifeRecovery=gcudLua.StringToInteger("A008"),
             --撕裂之爪
             TearingClaw=gcudLua.StringToInteger("A009"),
+            --魔法洪流
+            MagicWave=gcudLua.StringToInteger("A00B"),
         },
         --物品类型
         ItemType = {
@@ -153,6 +156,8 @@ function InitConstant()
             gcudLua.StringToInteger("Hmkg"), 
             --熊怪乌萨长者
             gcudLua.StringToInteger("N007"), 
+            --血魔法师
+            gcudLua.StringToInteger("Hblm"), 
             },
         --Boss列表
         BossList={

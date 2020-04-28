@@ -64,6 +64,11 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer)then
                             Skill_Effect_TearingClam(DamageSource,DamageTarget)
                         end
+                    --魔法洪流
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.MagicWave)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].MagicWave then
+                            Skill_Effect_MagicWave(DamageSource,DamageSourcePlayer,GetUnitX(DamageTarget),GetUnitY(DamageTarget))
+                        end
                     end
                 end
             end

@@ -74,3 +74,8 @@ function Skill_Event_Add_LifeRecovery(u)
         end
     end)
 end
+
+--魔法洪流
+function Skill_EVENT_Add_MagicWave(u)
+    Units[u].MagicWave=true
+end

@@ -97,3 +97,15 @@ function UnitAttribute(u,AttributeType,Value,IsAdd)
     IncUnitAbilityLevel(u,AttributeType.Id)
     DecUnitAbilityLevel(u,AttributeType.Id)
 end
+
+--获取单位护甲护甲伤害比
+function GetUnitArmorDamageRate(u)
+    local Value=BlzGetUnitArmor(u)*0.06
+    return Value/(Value+1)
+end
+
+--Ai卖物品
+function AiSellItem(i,it,p)
+    RemoveItem(i)
+    gcudLua.ModifyPlayerGold(p,ItemTypeData[it].Gold,true)
+end

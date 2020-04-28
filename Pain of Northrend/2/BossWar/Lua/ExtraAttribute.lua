@@ -35,6 +35,9 @@ function BindExtraConstant()
     Constant.HeroSkillLists[gcudLua.StringToInteger("N007")]={
         {Id=Constant.Skill.LifeRecovery,Name="生命恢复",Level=1,Proficiency=0,Event={Add=Skill_Event_Add_LifeRecovery}},
     }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("Hblm")]={
+        {Id=Constant.Skill.MagicWave,Name="魔法洪流",Event={Add=Skill_EVENT_Add_MagicWave}},
+    }
     --也没法获取物品的黄金消耗
     ItemTypeData[Constant.ItemType.IronSword]={Gold=15}
     ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}
