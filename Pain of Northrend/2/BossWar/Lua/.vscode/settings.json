@@ -147,6 +147,8 @@
         "DAMAGE_TYPE_DEMOLITION",
         "GetUnitFlyHeight",
         "ABILITY_ILF_DEFENSE_BONUS_IDEF",
-        "ABILITY_ILF_ATTACK_BONUS"
+        "ABILITY_ILF_ATTACK_BONUS",
+        "BlzGetUnitMaxHP",
+        "UnitDamagePoint"
     ]
 }

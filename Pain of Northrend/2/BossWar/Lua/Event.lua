@@ -41,7 +41,7 @@ function InitDamageEvent()
                 if gcudLua.IsAttackDamage() then
                     --魅惑
                     if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) then
-                    if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
                             Skill_Effect_Charm(DamageSource, DamageTarget)
                         end
                     --闪电攻击
@@ -69,6 +69,16 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].MagicWave then
                             Skill_Effect_MagicWave(DamageSource,DamageSourcePlayer,GetUnitX(DamageTarget),GetUnitY(DamageTarget))
                         end
+                    --分裂攻击
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.SplitAttack)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_SplitAttack(DamageSource,DamageValue,DamageSourcePlayer)
+                        end
+                    --致命一击
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.StrikeAttack)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_StrikeAttack(DamageSource,DamageTarget,DamageValue)
+                        end
                     end
                 end
             end
@@ -84,6 +94,9 @@ function InitDieEvent()
     TriggerAddAction(t, function()
         local Dead, Killer = GetDyingUnit(), GetKillingUnit()
         local DeadPlayer, KillerPlayer = GetTriggerPlayer(),GetOwningPlayer(Killer)
+        if gcudLua.UnitHaveSkill(Dead,Constant.Skill.Boom) then
+            Skill_Effect_Boom(Dead)
+        end
         if DeadPlayer==gcudLua.MonsterPlayer and IsUnitEnemy(Dead, KillerPlayer) then
             KillReward(KillerPlayer, Dead)
         end

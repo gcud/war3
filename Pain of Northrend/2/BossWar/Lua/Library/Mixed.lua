@@ -109,3 +109,14 @@ function AiSellItem(i,it,p)
     RemoveItem(i)
     gcudLua.ModifyPlayerGold(p,ItemTypeData[it].Gold,true)
 end
+
+function CreateDamageTipsAtUnit(u,Damage)
+    Damage=math.modf(Damage)
+    local t=CreateTextTag()
+    SetTextTagPosUnit(t, u, 0)
+    SetTextTagColor(t, 255, 0, 0, 255)
+    SetTextTagText(t, Damage.."!", 0.025)
+    gcudLua.TimerFunctionOnce(1, function ()
+        DestroyTextTag(t)
+    end)
+end

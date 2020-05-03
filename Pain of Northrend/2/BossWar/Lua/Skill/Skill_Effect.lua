@@ -155,3 +155,33 @@ function Skill_Effect_MagicWave(u,p,X,Y)
         end)
     end
 end
+
+--分裂攻击
+function Skill_Effect_SplitAttack(u,Damage,p)
+    local Radius,DamageParameter=300,1
+    local Damage=Damage*DamageParameter
+    gcudLua.EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u),GetUnitY(u), Radius, function (Target)
+        if(gcudLua.UnitIsAlive(Target)and IsUnitEnemy(Target,p))then
+            UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL)
+        end
+    end)
+end
+
+--致命一击
+function Skill_Effect_StrikeAttack(u,Target,Damage)
+    local Rate,BaseDamageParameter,DamageParameter=15,1,0.1
+    local Damage=Damage*(GetUpgradeAbilityLevel(u,Constant.Skill.StrikeAttack)*DamageParameter+BaseDamageParameter)
+    if GetRandomInt(1,100)<=Rate then
+        CreateDamageTipsAtUnit(u,Damage)
+        UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL)
+        IncreaseAbilityProficiency(u,Constant.Skill.StrikeAttack)
+    end
+end
+
+--自爆
+function Skill_Effect_Boom(u)
+    local DamageParameter,Radius,X,Y=3,500,GetUnitX(u), GetUnitY(u)
+    local Damage=BlzGetUnitMaxHP(u)*DamageParameter
+    DestroyEffect(AddSpecialEffect("Objects/Spawnmodels/Other/NeutralBuildingExplosion/NeutralBuildingExplosion.mdl", X, Y))
+    UnitDamagePoint(u, 0, Radius,X,Y,Damage, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS)
+end

@@ -38,13 +38,24 @@ function BindExtraConstant()
     Constant.HeroSkillLists[gcudLua.StringToInteger("Hblm")]={
         {Id=Constant.Skill.MagicWave,Name="魔法洪流",Event={Add=Skill_EVENT_Add_MagicWave}},
     }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N006")]={
+        {Id=Constant.Skill.SplitAttack,Name="分裂攻击"},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("Obla")]={
+        {Id=Constant.Skill.StrikeAttack,Name="致命一击",Level=1,Proficiency=0},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N009")]={
+        {Id=Constant.Skill.Boom,Name="自爆"},
+    }
     --也没法获取物品的黄金消耗
-    ItemTypeData[Constant.ItemType.IronSword]={Gold=15}
     ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}
     ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=135}
     ItemTypeData[Constant.ItemType.ConciseIronSword]={Gold=180}
+    ItemTypeData[Constant.ItemType.VictorySword]={Gold=500}
     ItemTypeData[Constant.ItemType.LeatherHelmet]={Gold=9}
-    ItemTypeData[Constant.ItemType.GoodLeatherHelmet]={Gold=54}
-    ItemTypeData[Constant.ItemType.PizaloLeatherHelmet]={Gold=81}
+    ItemTypeData[Constant.ItemType.GoodHelmet]={Gold=54}
+    ItemTypeData[Constant.ItemType.PizaloHelmet]={Gold=81}
+    ItemTypeData[Constant.ItemType.NefrharHelmet]={Gold=300}
     ItemTypeData[Constant.ItemType.LifeAmulet]={Gold=150}
+    ItemTypeData[Constant.ItemType.HealingGem]={Gold=500}
 end
