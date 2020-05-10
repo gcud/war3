@@ -51,6 +51,15 @@ function BindExtraConstant()
     Constant.HeroSkillLists[gcudLua.StringToInteger("N00A")]={
         {Id=Constant.Skill.Batter,Name="连击"},
     }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N006")]={
+        {Id=Constant.Skill.SplitAttack,Name="分裂攻击"},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("Obla")]={
+        {Id=Constant.Skill.StrikeAttack,Name="致命一击",Level=1,Proficiency=0},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N009")]={
+        {Id=Constant.Skill.Boom,Name="自爆"},
+    }
     --也没法获取物品的黄金消耗
     ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}
     ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=135}

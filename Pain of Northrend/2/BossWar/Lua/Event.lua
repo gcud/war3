@@ -79,6 +79,7 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
                             Skill_Effect_StrikeAttack(DamageSource,DamageTarget,DamageValue)
                         end
+<<<<<<< HEAD
                     --剑术
                     elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Fencing)then
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
@@ -89,6 +90,8 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
                             Skill_Effect_Batter(DamageSource,DamageTarget,DamageValue)
                         end
+=======
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
                     end
                 end
             end

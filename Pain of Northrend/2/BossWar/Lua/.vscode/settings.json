@@ -149,10 +149,14 @@
         "ABILITY_ILF_DEFENSE_BONUS_IDEF",
         "ABILITY_ILF_ATTACK_BONUS",
         "BlzGetUnitMaxHP",
+<<<<<<< HEAD
         "UnitDamagePoint",
         "BlzSetEventDamageType",
         "BlzGetEventAttackType",
         "BlzGetEventWeaponType",
         "UNIT_TYPE_RANGED_ATTACKER"
+=======
+        "UnitDamagePoint"
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
     ]
 }

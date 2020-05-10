@@ -2,7 +2,11 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
+<<<<<<< HEAD
         Version = "20200510",
+=======
+        Version = "20200503",
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
         GameOver = false,
         --坐标
         Coordinate = {
@@ -50,8 +54,12 @@ function InitConstant()
             AiHeroFleeHpMin=100,
             AiHeroRecoverHpRate=0.8,
             AiHeroFleeMinLevel=20,
+<<<<<<< HEAD
             AiArmorRateCheck=0.8,
             GetNewSkillLevelParameter=5
+=======
+            AiArmorRateCheck=0.8
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
         },
         --单位
         Unit = {
@@ -93,10 +101,13 @@ function InitConstant()
             StrikeAttack=gcudLua.StringToInteger("A00H"),
             --自爆
             Boom=gcudLua.StringToInteger("A00I"),
+<<<<<<< HEAD
             --剑术
             Fencing=gcudLua.StringToInteger("A00J"),
             --连击
             Batter=gcudLua.StringToInteger("A00K"),
+=======
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
         },
         --物品类型
         ItemType = {
@@ -181,8 +192,11 @@ function InitConstant()
             gcudLua.StringToInteger("Obla"), 
             --地精工兵
             gcudLua.StringToInteger("N009"), 
+<<<<<<< HEAD
             --村民
             gcudLua.StringToInteger("N00A"), 
+=======
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
             },
         --Boss列表
         BossList={

@@ -169,8 +169,13 @@ end
 
 --致命一击
 function Skill_Effect_StrikeAttack(u,Target,Damage)
+<<<<<<< HEAD
     local Rate,DamageParameter,BaseDamage=15,0.1,200
     local Damage=Damage*GetUpgradeAbilityLevel(u,Constant.Skill.StrikeAttack)*DamageParameter+BaseDamage
+=======
+    local Rate,BaseDamageParameter,DamageParameter=15,1,0.1
+    local Damage=Damage*(GetUpgradeAbilityLevel(u,Constant.Skill.StrikeAttack)*DamageParameter+BaseDamageParameter)
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
     if GetRandomInt(1,100)<=Rate then
         CreateDamageTipsAtUnit(u,Damage)
         UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL)
@@ -184,6 +189,7 @@ function Skill_Effect_Boom(u)
     local Damage=BlzGetUnitMaxHP(u)*DamageParameter
     DestroyEffect(AddSpecialEffect("Objects/Spawnmodels/Other/NeutralBuildingExplosion/NeutralBuildingExplosion.mdl", X, Y))
     UnitDamagePoint(u, 0, Radius,X,Y,Damage, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS)
+<<<<<<< HEAD
 end
 
 --剑术
@@ -213,4 +219,6 @@ function Skill_Effect_Batter(u,Target,Damage)
             end)
         end
     end
+=======
+>>>>>>> f386237c35231363ce1d2f1aaf7c489b1582fea5
 end
