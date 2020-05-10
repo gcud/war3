@@ -65,6 +65,8 @@ end
 --添加特有技能
 function AddSpecialAbility(u,Skill)
     UnitAddAbility(u,Skill.Id)
+    table.insert(Units[u].SkillList,{Id=Skill.Id,Name=Skill.Name,Level=Skill.Level,Proficiency=Skill.Proficiency})
+    --触发添加事件
     if Skill.Event~=nil then
         Skill.Event.Add(u)
     end
@@ -76,7 +78,7 @@ function BossStrong(Boss, DiedHeroLevel)
     local AddHp,AddAttackPower,AddArmor,AddHpRecovery=AddHpParameter*DiedHeroLevel,AddAttackPowerParameter*DiedHeroLevel,AddArmorParameter*DiedHeroLevel,AddHpRecoveryParameter*DiedHeroLevel
     gcudLua.ModifyUnitMaxHP(Boss,AddHp,true)
     gcudLua.ModifyUnitHP(Boss,AddHp,true)
-    UnitAttribute(Boss,Constant.ATTRIBUTE_ATTACK_POWER,AddAttackPower,true)
+    gcudLua.ModifyUnitAttackPower(Boss,AddAttackPower,true)
     UnitAttribute(Boss,Constant.ATTRIBUTE_ARMOR,AddArmor,true)
     gcudLua.ModifyUnitHpRecovery(Boss,Constant.ATTRIBUTE_HP_RECOVERY,AddHpRecovery,true)
 end
@@ -108,4 +110,15 @@ end
 function AiSellItem(i,it,p)
     RemoveItem(i)
     gcudLua.ModifyPlayerGold(p,ItemTypeData[it].Gold,true)
+end
+
+function CreateDamageTipsAtUnit(u,Damage)
+    Damage=math.modf(Damage)
+    local t=CreateTextTag()
+    SetTextTagPosUnit(t, u, 0)
+    SetTextTagColor(t, 255, 0, 0, 255)
+    SetTextTagText(t, Damage.."!", 0.025)
+    gcudLua.TimerFunctionOnce(1, function ()
+        DestroyTextTag(t)
+    end)
 end

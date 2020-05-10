@@ -58,9 +58,9 @@ end
 
 --毒
 function Skill_Effect_Pison(u,Target)
-    local DamageParameter=1
+    local DamageParameter=1.5
     local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*DamageParameter
-    local TimeParameter=1
+    local TimeParameter=0.5
     local Time,NowTime=GetUpgradeAbilityLevel(u,Constant.Skill.Poison)*TimeParameter,0
     Units[u].Skill_Pison_PisonPoint=Units[u].Skill_Pison_PisonPoint-1
     IncreaseAbilityProficiency(u,Constant.Skill.Poison)
@@ -100,8 +100,8 @@ end
 
 --震击
 function Skill_Effect_Shock(u)
-    local DamageParameter,Rate,Radius=10,15,300
-    local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Shock)*DamageParameter
+    local DamageParameter,Rate,Radius,BaseDamage=10,15,300,100
+    local Damage=GetUpgradeAbilityLevel(u,Constant.Skill.Shock)*DamageParameter+BaseDamage
     if GetRandomInt(1,100)<=Rate then
         local X,Y=GetUnitX(u),GetUnitY(u)
         local p=GetOwningPlayer(u)
@@ -153,5 +153,64 @@ function Skill_Effect_MagicWave(u,p,X,Y)
         gcudLua.TimerFunctionOnce(CoolDown,function ()
         Units[u].MagicWave=true
         end)
+    end
+end
+
+--分裂攻击
+function Skill_Effect_SplitAttack(u,Damage,p)
+    local Radius,DamageParameter=300,1
+    local Damage=Damage*DamageParameter
+    gcudLua.EnumUnitsInRangeDoActionAtCoordinate(GetUnitX(u),GetUnitY(u), Radius, function (Target)
+        if(gcudLua.UnitIsAlive(Target)and IsUnitEnemy(Target,p))then
+            UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL)
+        end
+    end)
+end
+
+--致命一击
+function Skill_Effect_StrikeAttack(u,Target,Damage)
+    local Rate,DamageParameter,BaseDamage=15,0.1,200
+    local Damage=Damage*GetUpgradeAbilityLevel(u,Constant.Skill.StrikeAttack)*DamageParameter+BaseDamage
+    if GetRandomInt(1,100)<=Rate then
+        CreateDamageTipsAtUnit(u,Damage)
+        UnitDamageTarget(u,Target,Damage,false,false,ATTACK_TYPE_NORMAL,DAMAGE_TYPE_NORMAL)
+        IncreaseAbilityProficiency(u,Constant.Skill.StrikeAttack)
+    end
+end
+
+--自爆
+function Skill_Effect_Boom(u)
+    local DamageParameter,Radius,X,Y=3,500,GetUnitX(u), GetUnitY(u)
+    local Damage=BlzGetUnitMaxHP(u)*DamageParameter
+    DestroyEffect(AddSpecialEffect("Objects/Spawnmodels/Other/NeutralBuildingExplosion/NeutralBuildingExplosion.mdl", X, Y))
+    UnitDamagePoint(u, 0, Radius,X,Y,Damage, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_NORMAL, WEAPON_TYPE_WHOKNOWS)
+end
+
+--剑术
+function Skill_Effect_Fencing(u)
+    local Rate,AddDamage=15,GetUpgradeAbilityLevel(u, Constant.Skill.Fencing)
+    if GetRandomInt(1,100)<=Rate then
+        BlzSetEventDamageType(DAMAGE_TYPE_DEMOLITION)
+        BlzSetEventDamage(GetEventDamage()+AddDamage)
+        IncreaseAbilityProficiency(u,Constant.Skill.Fencing)
+        local Effect=AddSpecialEffectTarget("Abilities/Spells/Orc/TrollBerserk/HeadhunterWEAPONSLeft.mdl", u, "weapon")
+        gcudLua.TimerFunctionOnce(1,function()
+            DestroyEffect(Effect)
+        end)
+    end
+end
+
+--连击
+function Skill_Effect_Batter(u,Target,Damage)
+    local Rate,AttackNumberMin,AttackNumberMax=15,1,5
+    local AttackNumber=GetRandomInt(AttackNumberMin,AttackNumberMax)
+    if GetRandomInt(1,100)<=Rate then
+        local AttackType,WeaponType,IsRange=BlzGetEventAttackType(),BlzGetEventWeaponType(),IsUnitType(u, UNIT_TYPE_RANGED_ATTACKER)
+        for i = 1, AttackNumber do
+            gcudLua.TimerFunctionOnce(0.1,function ()
+                UnitDamageTarget(u,Target,Damage,true,IsRange,AttackType,DAMAGE_TYPE_NORMAL,WeaponType)
+                DestroyEffect(AddSpecialEffectTarget("Abilities/Spells/Human/FlakCannons/FlakTarget.mdl",u,"weapon"))
+            end)
+        end
     end
 end

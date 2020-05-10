@@ -2,7 +2,7 @@
 function Skill_Event_Add_Pison(u)
     local LimitParameter=5
     Units[u].Skill_Pison_PisonPoint=0
-    gcudLua.TimerFunction(3,function()
+    gcudLua.TimerFunction(5,function()
         if Constant.GameOver then
             DestroyTimer(GetExpiredTimer())
         elseif gcudLua.UnitIsAlive(u) then
@@ -76,6 +76,18 @@ function Skill_Event_Add_LifeRecovery(u)
 end
 
 --魔法洪流
-function Skill_EVENT_Add_MagicWave(u)
+function Skill_Event_Add_MagicWave(u)
     Units[u].MagicWave=true
+end
+
+--性感
+function Skill_Event_Add_Sexy(u)
+    local t,Radius,p=CreateTrigger(),150,GetOwningPlayer(u)
+    TriggerRegisterUnitInRange(t,u,Radius,nil)
+    TriggerAddAction(t,function ()
+        local Target=GetTriggerUnit()
+        if gcudLua.gcudFilter({"EnemyUnit","AliveUnit","NotMechanical"}, {MainUnit=Target,MainPlayer=p}) and GetUnitLevel(u)>=GetUnitLevel(Target) and not IsUnitType(Target,UNIT_TYPE_GIANT) then
+            Skill_Effect_Charm(u,Target)
+        end
+    end)
 end

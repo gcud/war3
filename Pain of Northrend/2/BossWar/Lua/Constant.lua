@@ -2,7 +2,7 @@ function InitConstant()
     InitConstant = nil
     Constant = {
         Debug = false,
-        Version = "20200427",
+        Version = "20200510",
         GameOver = false,
         --坐标
         Coordinate = {
@@ -49,8 +49,9 @@ function InitConstant()
             SafeDistance=400,
             AiHeroFleeHpMin=100,
             AiHeroRecoverHpRate=0.8,
-            AiHeroFleeMinLevel=25,
-            AiArmorRateCheck=0.8
+            AiHeroFleeMinLevel=20,
+            AiArmorRateCheck=0.8,
+            GetNewSkillLevelParameter=5
         },
         --单位
         Unit = {
@@ -66,6 +67,8 @@ function InitConstant()
             BuyItem=gcudLua.StringToInteger("Apit"),
             --魅惑
             Charm=gcudLua.StringToInteger("A000"),
+            --性感
+            Sexy=gcudLua.StringToInteger("A001"),
             --闪电攻击
             LightningAttack=gcudLua.StringToInteger("A002"),
             --毒
@@ -84,27 +87,41 @@ function InitConstant()
             TearingClaw=gcudLua.StringToInteger("A009"),
             --魔法洪流
             MagicWave=gcudLua.StringToInteger("A00B"),
+            --分裂攻击
+            SplitAttack=gcudLua.StringToInteger("A00G"),
+            --致命一击
+            StrikeAttack=gcudLua.StringToInteger("A00H"),
+            --自爆
+            Boom=gcudLua.StringToInteger("A00I"),
+            --剑术
+            Fencing=gcudLua.StringToInteger("A00J"),
+            --连击
+            Batter=gcudLua.StringToInteger("A00K"),
         },
         --物品类型
         ItemType = {
-            --铁剑
-            IronSword=gcudLua.StringToInteger("I000"),
             --优良铁剑
             BetterIronSword=gcudLua.StringToInteger("I002"),
             --上等铁剑
             GoodIronSword=gcudLua.StringToInteger("I003"),
             --精炼铁剑
             ConciseIronSword=gcudLua.StringToInteger("I004"),
+            --胜利之剑
+            VictorySword=gcudLua.StringToInteger("I008"),
             --皮质头盔
             LeatherHelmet=gcudLua.StringToInteger("I001"),
             --上等头盔
-            GoodLeatherHelmet=gcudLua.StringToInteger("I005"),
+            GoodHelmet=gcudLua.StringToInteger("I005"),
             --皮泽洛头盔
-            PizaloLeatherHelmet=gcudLua.StringToInteger("I006"),
+            PizaloHelmet=gcudLua.StringToInteger("I006"),
+            --奈芬哈尔头盔
+            NefrharHelmet=gcudLua.StringToInteger("I007"),
             --加速手套
             AccelerationGloves=gcudLua.StringToInteger("gcel"),
             --生命护身符
             LifeAmulet=gcudLua.StringToInteger("prvt"),
+            --卡嘉医疗宝石
+            HealingGem=gcudLua.StringToInteger("rhth"),
         },
         --Buff
         Buff = {},
@@ -158,6 +175,14 @@ function InitConstant()
             gcudLua.StringToInteger("N007"), 
             --血魔法师
             gcudLua.StringToInteger("Hblm"), 
+            --领主
+            gcudLua.StringToInteger("N006"), 
+            --剑圣
+            gcudLua.StringToInteger("Obla"), 
+            --地精工兵
+            gcudLua.StringToInteger("N009"), 
+            --村民
+            gcudLua.StringToInteger("N00A"), 
             },
         --Boss列表
         BossList={

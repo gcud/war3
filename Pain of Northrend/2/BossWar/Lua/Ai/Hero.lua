@@ -53,39 +53,69 @@ function Ai_Hero_BuyItem(p,Shopper)
 end
 
 function Ai_Hero_BuyWeapon(p,Shopper)
-    --精炼铁剑
-    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.ConciseIronSword].Gold then
-        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.ConciseIronSword)
+    --胜利之剑
+    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.VictorySword].Gold then
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.VictorySword)
     else
-        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.GoodIronSword)
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.ConciseIronSword)
     end
 end
 
 function Ai_Hero_BuyArmor(p,Shopper)
-    --皮泽洛头盔
-    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.PizaloLeatherHelmet].Gold then
-        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.PizaloLeatherHelmet)
+    --奈芬哈尔头盔
+    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.NefrharHelmet].Gold then
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.NefrharHelmet)
     else
-        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.GoodLeatherHelmet)
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.PizaloHelmet)
     end
 end
 
 function Ai_Hero_BuyGrocery(p,Shopper)    
-    --生命护身符
-    IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LifeAmulet)
+    --医疗宝石
+    if gcudLua.GetPlayerGold(p)>=ItemTypeData[Constant.ItemType.HealingGem].Gold then
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.HealingGem)
+    else
+        IssueNeutralImmediateOrderById(p, Shopper, Constant.ItemType.LifeAmulet)
+    end
 end
 
 function Ai_Hero_Inventory_Full_Action(h,p)
-    --卖护甲物品
+    --卖护甲
     if GetUnitArmorDamageRate(h)>Constant.Value.AiArmorRateCheck then
         for i = 0, 5 do
             local Item=UnitItemInSlot(h,i)
             if Item~=nil then
                 local ItemType=GetItemTypeId(Item)
-                if ItemType==Constant.ItemType.GoodLeatherHelmet then
+                if ItemType==Constant.ItemType.PizaloHelmet then
                     AiSellItem(i,ItemType,p)
                     break
-                elseif ItemType==Constant.ItemType.PizaloLeatherHelmet then
+                elseif ItemType==Constant.ItemType.NefrharHelmet then
+                    AiSellItem(Item,ItemType,p)
+                    break
+                end
+            end
+        end
+    end
+    --卖增加生命值
+    if gcudLua.UnitHaveTypeItem(h,Constant.ItemType.HealingGem) then
+        for i = 0, 5 do
+            local Item=UnitItemInSlot(h,i)
+            if Item~=nil then
+                local ItemType=GetItemTypeId(Item)
+                if ItemType==Constant.ItemType.LifeAmulet then
+                    AiSellItem(i,ItemType,p)
+                    break
+                end
+            end
+        end
+    end
+    --卖加攻击力
+    if gcudLua.UnitHaveTypeItem(h,Constant.ItemType.VictorySword) then
+        for i = 0, 5 do
+            local Item=UnitItemInSlot(h,i)
+            if Item~=nil then
+                local ItemType=GetItemTypeId(Item)
+                if ItemType==Constant.ItemType.ConciseIronSword then
                     AiSellItem(i,ItemType,p)
                     break
                 end

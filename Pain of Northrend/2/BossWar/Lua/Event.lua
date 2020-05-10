@@ -6,7 +6,7 @@ function InitEvent()
     InitSpellEvent()
     InitChatEvent()
     --InitAttackEvent()
-    --InitLevelUpEvent()
+    InitLevelUpEvent()
     InitGetItemEvent()
     InitSelectUnitEvent()
     --InitUseItemEvent()
@@ -41,7 +41,7 @@ function InitDamageEvent()
                 if gcudLua.IsAttackDamage() then
                     --魅惑
                     if gcudLua.UnitHaveSkill(DamageSource, Constant.Skill.Charm) then
-                    if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) and  GetUnitLevel(DamageSource)>=GetUnitLevel(DamageTarget) and not IsUnitType(DamageTarget,UNIT_TYPE_GIANT) and not IsUnitType(DamageTarget,UNIT_TYPE_MECHANICAL) then
                             Skill_Effect_Charm(DamageSource, DamageTarget)
                         end
                     --闪电攻击
@@ -69,6 +69,26 @@ function InitDamageEvent()
                         if IsUnitEnemy(DamageSource,DamageTargetPlayer) and Units[DamageSource].MagicWave then
                             Skill_Effect_MagicWave(DamageSource,DamageSourcePlayer,GetUnitX(DamageTarget),GetUnitY(DamageTarget))
                         end
+                    --分裂攻击
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.SplitAttack)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_SplitAttack(DamageSource,DamageValue,DamageSourcePlayer)
+                        end
+                    --致命一击
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.StrikeAttack)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_StrikeAttack(DamageSource,DamageTarget,DamageValue)
+                        end
+                    --剑术
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Fencing)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_Fencing(DamageSource)
+                        end
+                    --剑术
+                    elseif gcudLua.UnitHaveSkill(DamageSource,Constant.Skill.Batter)then
+                        if IsUnitEnemy(DamageSource,DamageTargetPlayer) then
+                            Skill_Effect_Batter(DamageSource,DamageTarget,DamageValue)
+                        end
                     end
                 end
             end
@@ -84,6 +104,9 @@ function InitDieEvent()
     TriggerAddAction(t, function()
         local Dead, Killer = GetDyingUnit(), GetKillingUnit()
         local DeadPlayer, KillerPlayer = GetTriggerPlayer(),GetOwningPlayer(Killer)
+        if gcudLua.UnitHaveSkill(Dead,Constant.Skill.Boom) then
+            Skill_Effect_Boom(Dead)
+        end
         if DeadPlayer==gcudLua.MonsterPlayer and IsUnitEnemy(Dead, KillerPlayer) then
             KillReward(KillerPlayer, Dead)
         end
@@ -141,7 +164,6 @@ function InitEnterMapEvent()
             local Skill=Constant.HeroSkillLists[GetUnitTypeId(NowHero[p].Unit)][1]
             AddSpecialAbility(NowHero[p].Unit,Skill)
             UnitMakeAbilityPermanent(NowHero[p].Unit, true,Skill.Id)
-            table.insert(Units[NowHero[p].Unit].SkillList,{Id=Skill.Id,Name=Skill.Name,Level=Skill.Level,Proficiency=Skill.Proficiency})
             PlayerSelectSingleUnit(p, NowHero[p].Unit)
             if GetPlayerController(p) == MAP_CONTROL_COMPUTER then
                 Ai_Hero_Init(NowHero[p].Unit,p)
@@ -198,8 +220,14 @@ function InitLevelUpEvent()
     local t = CreateTrigger()
     RegisterAnyUnitEvent(t, EVENT_PLAYER_HERO_LEVEL)
     TriggerAddAction(t, function()
-        -- local Hero = GetTriggerUnit()
-        -- local p = GetTriggerPlayer()
+        local Hero,p = GetTriggerUnit(),GetTriggerPlayer()
+        if math.fmod(GetUnitLevel(Hero), Constant.Value.GetNewSkillLevelParameter)==0 then
+            local Skill=Constant.HeroSkillLists[GetUnitTypeId(Hero)][#Units[Hero].SkillList+1]
+            if Skill~=nil then
+                AddSpecialAbility(Hero, Skill)
+                gcudLua.DisplayMessage("获得新技能:"..Skill.Name,p)
+            end
+        end
     end)
 end
 

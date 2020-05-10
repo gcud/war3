@@ -12,7 +12,7 @@ function BindExtraConstant()
     --感觉真赶工,居然没法直接获取技能名称
     Constant.HeroSkillLists[gcudLua.StringToInteger("N001")]={
         {Id=Constant.Skill.Charm,Name="魅惑",Level=1,Proficiency=0},
-        {Id=gcudLua.StringToInteger("A001"),Name="性感",Level=1,Proficiency=0},
+        {Id=Constant.Skill.Sexy,Name="性感",Event={Add=Skill_Event_Add_Sexy}},
     }
     Constant.HeroSkillLists[gcudLua.StringToInteger("N004")]={
         {Id=Constant.Skill.LightningAttack,Name="闪电攻击",Level=1},
@@ -28,6 +28,7 @@ function BindExtraConstant()
     }
     Constant.HeroSkillLists[gcudLua.StringToInteger("H001")]={
         {Id=Constant.Skill.BanMagic,Name="魔法禁用",Level=1,Proficiency=0},
+        {Id=Constant.Skill.Fencing,Name="剑术",Level=1,Proficiency=0},
     }
     Constant.HeroSkillLists[gcudLua.StringToInteger("Hmkg")]={
         {Id=Constant.Skill.Shock,Name="震击",Level=1,Proficiency=0},
@@ -36,15 +37,29 @@ function BindExtraConstant()
         {Id=Constant.Skill.LifeRecovery,Name="生命恢复",Level=1,Proficiency=0,Event={Add=Skill_Event_Add_LifeRecovery}},
     }
     Constant.HeroSkillLists[gcudLua.StringToInteger("Hblm")]={
-        {Id=Constant.Skill.MagicWave,Name="魔法洪流",Event={Add=Skill_EVENT_Add_MagicWave}},
+        {Id=Constant.Skill.MagicWave,Name="魔法洪流",Event={Add=Skill_Event_Add_MagicWave}},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N006")]={
+        {Id=Constant.Skill.SplitAttack,Name="分裂攻击"},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("Obla")]={
+        {Id=Constant.Skill.StrikeAttack,Name="致命一击",Level=1,Proficiency=0},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N009")]={
+        {Id=Constant.Skill.Boom,Name="自爆"},
+    }
+    Constant.HeroSkillLists[gcudLua.StringToInteger("N00A")]={
+        {Id=Constant.Skill.Batter,Name="连击"},
     }
     --也没法获取物品的黄金消耗
-    ItemTypeData[Constant.ItemType.IronSword]={Gold=15}
     ItemTypeData[Constant.ItemType.BetterIronSword]={Gold=90}
     ItemTypeData[Constant.ItemType.GoodIronSword]={Gold=135}
     ItemTypeData[Constant.ItemType.ConciseIronSword]={Gold=180}
+    ItemTypeData[Constant.ItemType.VictorySword]={Gold=500}
     ItemTypeData[Constant.ItemType.LeatherHelmet]={Gold=9}
-    ItemTypeData[Constant.ItemType.GoodLeatherHelmet]={Gold=54}
-    ItemTypeData[Constant.ItemType.PizaloLeatherHelmet]={Gold=81}
+    ItemTypeData[Constant.ItemType.GoodHelmet]={Gold=54}
+    ItemTypeData[Constant.ItemType.PizaloHelmet]={Gold=81}
+    ItemTypeData[Constant.ItemType.NefrharHelmet]={Gold=300}
     ItemTypeData[Constant.ItemType.LifeAmulet]={Gold=150}
+    ItemTypeData[Constant.ItemType.HealingGem]={Gold=500}
 end
